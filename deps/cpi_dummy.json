@@ -1,0 +1,20 @@
+{
+  "version": "0.1.0",
+  "name": "cpi_dummy",
+  "instructions": [
+    {
+      "name": "msg",
+      "accounts": [
+        {
+          "name": "dummyAcc",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "metadata": {
+    "address": "Ev6JrN5HqrKwXhoB9jucLdn51yzzDvWmBHkubXWavRio"
+  }
+}

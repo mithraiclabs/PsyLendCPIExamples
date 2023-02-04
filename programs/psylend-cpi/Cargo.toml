@@ -1,0 +1,25 @@
+[package]
+name = "psylend-cpi"
+version = "0.1.0"
+description = "PsyLend CPI Examples"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "psylend_cpi"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+devnet = []
+
+[profile.release]
+overflow-checks = true
+
+[dependencies]
+anchor-lang = "0.24.2"
+anchor-spl = { version = "0.24.2", features = ["dex"] }
+

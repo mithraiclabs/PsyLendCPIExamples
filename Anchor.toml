@@ -1,0 +1,27 @@
+[features]
+seeds = false
+
+#[programs.localnet]
+#psylend_cpi = "xRn33bnZqAfUsmGwzfYQ3is2Jn5xgoWq3R2yDfXX3ZH"
+
+[programs.devnet]
+psylend_cpi = "xRn33bnZqAfUsmGwzfYQ3is2Jn5xgoWq3R2yDfXX3ZH"
+psylend = { address = "8bpiM4yhcLYMSeCBTVFWisneXPQQWPYSA5ZpMm4DKAgT", idl = "./deps/psylend.json"}
+cpi_dummy = { address = "Ev6JrN5HqrKwXhoB9jucLdn51yzzDvWmBHkubXWavRio", idl = "./deps/cpi_dummy.json"}
+
+[programs.mainnet]
+psylend = { address ="PLENDj46Y4hhqitNV2WqLqGLrWKAaH2xJHm2UyHgJLY", idl = "./deps/psylend.json"}
+
+[registry]
+url = "TBD"
+
+[provider]
+cluster = "devnet"
+wallet = "/home/fish/.config/solana/id.json"
+
+#[[test.genesis]]
+#address = "8bpiM4yhcLYMSeCBTVFWisneXPQQWPYSA5ZpMm4DKAgT"
+#program = "./deps/psylend.so"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
