@@ -50,9 +50,7 @@ pub struct CloseDepositAccount<'info> {
     pub token_program: Program<'info, Token>,
 
     /// CHECK: Validated by constraint
-    #[account(
-        address = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap()
-    )]
+    #[account(address = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap())]
     pub psylend_program: UncheckedAccount<'info>,
 }
 

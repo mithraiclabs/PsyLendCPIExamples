@@ -7,8 +7,8 @@ use anchor_spl::token::Token;
 use std::str::FromStr;
 
 #[derive(Accounts)]
-pub struct InitializeDepositAccount<'info> {
-    /// The market the reserve falls under
+pub struct InitializeLoanAccount<'info> {
+    /// The relevant market this loan is for
     /// CHECK: Checked by PsyLend
     #[account()]
     pub market: UncheckedAccount<'info>,
@@ -17,25 +17,29 @@ pub struct InitializeDepositAccount<'info> {
     /// CHECK: Checked by PsyLend
     pub market_authority: UncheckedAccount<'info>,
 
-    /// The reserve being deposited into
+    /// The obligation the loan account is used for
+    /// CHECK: Checked by PsyLend
+    #[account(mut)]
+    pub obligation: UncheckedAccount<'info>,
+
+    /// The reserve that the loan comes from
     /// CHECK: Checked by PsyLend
     #[account()]
     pub reserve: UncheckedAccount<'info>,
 
-    /// The mint for the deposit notes
+    /// The mint for the loan notes being used as loan
     /// CHECK: Checked by PsyLend
-    pub deposit_note_mint: UncheckedAccount<'info>,
+    pub loan_note_mint: UncheckedAccount<'info>,
 
-    /// The user/wallet that owns the deposit account
-    /// Note: the market authority is the owner/authority in the technical sense.
+    /// The user/wallet that owns the loan
     #[account(mut)]
-    pub depositor: Signer<'info>,
+    pub owner: Signer<'info>,
 
-    /// The account that will store the deposit notes
-    /// A pda derived from "deposits", the reserve key, and the depositor key.
+    /// The account that will store the loan notes. 
+    /// A pda derived from "loan", the reserve key, the obligation key, and the owner key
     /// CHECK: Checked by PsyLend
     #[account(mut)]
-    pub deposit_account: UncheckedAccount<'info>,
+    pub loan_account: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -46,16 +50,17 @@ pub struct InitializeDepositAccount<'info> {
     pub psylend_program: UncheckedAccount<'info>,
 }
 
-pub fn handler(ctx: Context<InitializeDepositAccount>, bump: u8) -> Result<()> {
+pub fn handler(ctx: Context<InitializeLoanAccount>, bump: u8) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
     let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, bump)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
+        ctx.accounts.obligation.to_account_info(),
         ctx.accounts.reserve.to_account_info(),
-        ctx.accounts.deposit_note_mint.to_account_info(),
-        ctx.accounts.depositor.to_account_info(),
-        ctx.accounts.deposit_account.to_account_info(),
+        ctx.accounts.loan_note_mint.to_account_info(),
+        ctx.accounts.owner.to_account_info(),
+        ctx.accounts.loan_account.to_account_info(),
         ctx.accounts.token_program.to_account_info(),
         ctx.accounts.system_program.to_account_info(),
         ctx.accounts.rent.to_account_info(),
@@ -63,9 +68,10 @@ pub fn handler(ctx: Context<InitializeDepositAccount>, bump: u8) -> Result<()> {
     ];
 
     let seeds = &[
-        b"deposits".as_ref(),
+        b"loan".as_ref(),
         &ctx.accounts.reserve.key().to_bytes()[..],
-        &ctx.accounts.depositor.key().to_bytes()[..],
+        &ctx.accounts.obligation.key().to_bytes()[..],
+        &ctx.accounts.owner.key().to_bytes()[..],
     ];
     let signers_seeds = &[&seeds[..]];
 
@@ -74,7 +80,7 @@ pub fn handler(ctx: Context<InitializeDepositAccount>, bump: u8) -> Result<()> {
 }
 
 fn get_cpi_instruction(
-    ctx: &Context<InitializeDepositAccount>,
+    ctx: &Context<InitializeLoanAccount>,
     program_id: Pubkey,
     bump: u8,
 ) -> Result<Instruction> {
@@ -83,10 +89,11 @@ fn get_cpi_instruction(
         accounts: vec![
             AccountMeta::new_readonly(ctx.accounts.market.key(), false),
             AccountMeta::new_readonly(ctx.accounts.market_authority.key(), false),
+            AccountMeta::new(ctx.accounts.obligation.key(), false),
             AccountMeta::new_readonly(ctx.accounts.reserve.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.deposit_note_mint.key(), false),
-            AccountMeta::new(ctx.accounts.depositor.key(), true),
-            AccountMeta::new(ctx.accounts.deposit_account.key(), false),
+            AccountMeta::new_readonly(ctx.accounts.loan_note_mint.key(), false),
+            AccountMeta::new(ctx.accounts.owner.key(), true),
+            AccountMeta::new(ctx.accounts.loan_account.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
             AccountMeta::new_readonly(ctx.accounts.system_program.key(), false),
             AccountMeta::new_readonly(ctx.accounts.rent.key(), false),
@@ -102,7 +109,7 @@ struct CpiArgs {
 }
 
 fn get_ix_data(bump: u8) -> Vec<u8> {
-    let hash = get_function_hash("global", "init_deposit_account");
+    let hash = get_function_hash("global", "init_loan_account");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
     let args = CpiArgs { bump };

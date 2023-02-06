@@ -33,9 +33,7 @@ pub struct InitializeObligation<'info> {
     pub system_program: Program<'info, System>,
 
     /// CHECK: Validated by constraint
-    #[account(
-        address = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap()
-    )]
+    #[account(address = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap())]
     pub psylend_program: UncheckedAccount<'info>,
 }
 

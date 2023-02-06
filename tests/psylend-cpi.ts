@@ -83,9 +83,16 @@ describe("PsyLend CPI examples", () => {
   let usdcTokenAccountKey: PublicKey;
   /**
    * Deposit note account for USDC, a pda opened with initDepositAccount.
+   * Notes in this account are not able to be used as collateral
    */
   let usdcDepositAccountKey: PublicKey;
   let usdcDepositAccountBump: number;
+  /**
+   * Collateral note account for USDC, a pda opened with initCollateralAccount.
+   * Notes in this account can be used as collateral to borrow
+   */
+  let usdcCollateralAccountKey: PublicKey;
+  let usdcCollateralAccountBump: number;
 
   /**
    * Many instructions, for example deposit, require reserves to be accrued beforehand.
@@ -216,7 +223,9 @@ describe("PsyLend CPI examples", () => {
         ],
         psyLendProgram.programId
       );
-    console.log("creating usdc deposit acc: " + usdcDepositAccountKey);
+    if (verbose) {
+      console.log("creating usdc deposit acc: " + usdcDepositAccountKey);
+    }
 
     const ix = await program.methods
       .initDepositCpi(usdcDepositAccountBump)
@@ -264,17 +273,17 @@ describe("PsyLend CPI examples", () => {
       new BN(1 * 10 ** Math.abs(usdcReserve.exponent))
     );
     accrueUsdcIx = await program.methods
-    .acrrueInterestCpi()
-    .accounts({
-      market: marketKey,
-      marketAuthority: marketAuthority,
-      reserve: usdcReserveKey,
-      feeNoteVault: usdcReserve.feeNoteVault,
-      depositNoteMint: usdcReserve.depositNoteMint,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      psylendProgram: psyLendProgram.programId,
-    })
-    .instruction();
+      .acrrueInterestCpi()
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        reserve: usdcReserveKey,
+        feeNoteVault: usdcReserve.feeNoteVault,
+        depositNoteMint: usdcReserve.depositNoteMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
 
     const depositIx = await program.methods
       .depositCpi(usdcDepositAccountBump, amount)
@@ -293,7 +302,9 @@ describe("PsyLend CPI examples", () => {
       .instruction();
 
     try {
-      await provider.sendAndConfirm(new Transaction().add(accrueUsdcIx, depositIx));
+      await provider.sendAndConfirm(
+        new Transaction().add(accrueUsdcIx, depositIx)
+      );
     } catch (err) {
       console.log(err);
       throw err;
@@ -331,6 +342,91 @@ describe("PsyLend CPI examples", () => {
       Number(usdcAccountBefore.amount),
       Number(usdcAccountAfter.amount)
     );
+  });
+
+  it("Inits collateral account (USDC) by CPI", async () => {
+    // Derive the account address before creating it, e.g.
+    // TODO replace with call from /pdas after package bump
+    [usdcCollateralAccountKey, usdcCollateralAccountBump] =
+      PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("collateral"),
+          usdcReserveKey.toBytes(),
+          obligationKey.toBytes(),
+          wallet.publicKey.toBytes(),
+        ],
+        psyLendProgram.programId
+      );
+    if (verbose) {
+      console.log("creating usdc collateral acc: " + usdcCollateralAccountKey);
+    }
+
+    const ix = await program.methods
+      .initCollateralAccountCpi(usdcCollateralAccountBump)
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        obligation: obligationKey,
+        reserve: usdcReserveKey,
+        depositNoteMint: usdcReserve.depositNoteMint,
+        owner: wallet.publicKey,
+        collateralAccount: usdcCollateralAccountKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    // Exists
+    try {
+      await getAccount(provider.connection, usdcDepositAccountKey);
+      assert.ok(true);
+    } catch (err) {
+      assert.ok(false);
+    }
+  });
+
+  it("Closes collateral account (USDC) by CPI", async () => {
+    // Note that the collateral account must be empty.
+    const ix = await program.methods
+      .closeCollateralAccountCpi()
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        obligation: obligationKey,
+        owner: wallet.publicKey,
+        collateralAccount: usdcCollateralAccountKey,
+        depositAccount: usdcDepositAccountKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    // Doesn't exist
+    try {
+      await getAccount(provider.connection, usdcDepositAccountKey);
+      assert.ok(false);
+    } catch (err) {
+      if (verbose) {
+        console.log(usdcDepositAccountKey + " doesn't exist");
+      }
+      assert.ok(true);
+    }
   });
 
   it("Executes a withdraw (.5 USDC) by CPI", async () => {

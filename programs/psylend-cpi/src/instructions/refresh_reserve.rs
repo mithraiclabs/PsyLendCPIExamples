@@ -24,9 +24,7 @@ pub struct RefreshReserve<'info> {
     pub pyth_oracle_price: UncheckedAccount<'info>,
 
     /// CHECK: Validated by constraint
-    #[account(
-        address = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap()
-    )]
+    #[account(address = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap())]
     pub psylend_program: UncheckedAccount<'info>,
 }
 
