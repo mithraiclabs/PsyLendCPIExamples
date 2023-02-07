@@ -24,3 +24,9 @@ Check out common CPI examples in this repo, and see example front-end usage in t
 Want to integrate with PsyLend? Looking for Typescript utilities to interact with the program? Check
 out our npm package: <a
 href="https://www.npmjs.com/package/@mithraic-labs/psylend-utils">psylend-utils</a>
+
+## White Hats and Bug Bounty Hunters
+
+See our <a href="https://docs.psyoptions.io/psy-dao-bug-bounty">bug bouny policy</a>. Note that the PsyLend
+protocol is in scope, however the CPI library is not, as this is only a set of examples. Feel free
+to use the CPI library to look for vulnerabilities in PsyLend.
