@@ -1,4 +1,4 @@
-use crate::{constants::*, utils::get_function_hash};
+use crate::{constants::*, utils::get_function_hash, Amount};
 use anchor_lang::{
     prelude::*,
     solana_program::{instruction::Instruction, program::invoke_signed},
@@ -52,10 +52,16 @@ pub fn handler(
     ctx: Context<WithdrawCollateral>,
     collateral_bump: u8,
     deposit_bump: u8,
+    amount: Amount,
 ) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction =
-        get_cpi_instruction(&ctx, psylend_program_id, collateral_bump, deposit_bump)?;
+    let instruction: Instruction = get_cpi_instruction(
+        &ctx,
+        psylend_program_id,
+        collateral_bump,
+        deposit_bump,
+        amount,
+    )?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -73,9 +79,7 @@ pub fn handler(
         &ctx.accounts.reserve.key().to_bytes()[..],
         &ctx.accounts.owner.key().to_bytes()[..],
         b"collateral".as_ref(),
-        &ctx.accounts.reserve.key().to_bytes()[..],
         &ctx.accounts.obligation.key().to_bytes()[..],
-        &ctx.accounts.owner.key().to_bytes()[..],
     ];
     let signers_seeds = &[&seeds[..]];
 
@@ -88,6 +92,7 @@ fn get_cpi_instruction(
     program_id: Pubkey,
     collateral_bump: u8,
     deposit_bump: u8,
+    amount: Amount,
 ) -> Result<Instruction> {
     let instruction = Instruction {
         program_id,
@@ -101,7 +106,7 @@ fn get_cpi_instruction(
             AccountMeta::new(ctx.accounts.collateral_account.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
         ],
-        data: get_ix_data(collateral_bump, deposit_bump),
+        data: get_ix_data(collateral_bump, deposit_bump, amount),
     };
     Ok(instruction)
 }
@@ -110,15 +115,17 @@ fn get_cpi_instruction(
 struct CpiArgs {
     collateral_bump: u8,
     deposit_bump: u8,
+    amount: Amount,
 }
 
-fn get_ix_data(collateral_bump: u8, deposit_bump: u8) -> Vec<u8> {
+fn get_ix_data(collateral_bump: u8, deposit_bump: u8, amount: Amount) -> Vec<u8> {
     let hash = get_function_hash("global", "withdraw_collateral");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
     let args = CpiArgs {
         collateral_bump,
         deposit_bump,
+        amount,
     };
     args.serialize(&mut buf).unwrap();
     buf

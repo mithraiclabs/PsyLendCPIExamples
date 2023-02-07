@@ -16,7 +16,7 @@ pub mod psylend_cpi {
         instructions::dummy_cpi::handler(ctx)
     }
 
-    pub fn acrrue_interest_cpi(ctx: Context<AccrueInterest>) -> Result<()> {
+    pub fn accrue_interest_cpi(ctx: Context<AccrueInterest>) -> Result<()> {
         instructions::accrue_interest::handler(ctx)
     }
 
@@ -79,16 +79,18 @@ pub mod psylend_cpi {
         ctx: Context<DepositCollateral>,
         collateral_bump: u8,
         deposit_bump: u8,
+        amount: Amount,
     ) -> Result<()> {
-        instructions::deposit_collateral::handler(ctx, collateral_bump, deposit_bump)
+        instructions::deposit_collateral::handler(ctx, collateral_bump, deposit_bump, amount)
     }
 
     pub fn withdraw_collateral_cpi(
         ctx: Context<WithdrawCollateral>,
         collateral_bump: u8,
         deposit_bump: u8,
+        amount: Amount,
     ) -> Result<()> {
-        instructions::withdraw_collateral::handler(ctx, collateral_bump, deposit_bump)
+        instructions::withdraw_collateral::handler(ctx, collateral_bump, deposit_bump, amount)
     }
 
     pub fn repay_cpi(ctx: Context<Repay>, amount: Amount) -> Result<()> {
@@ -107,14 +109,14 @@ pub mod psylend_cpi {
         instructions::withdraw_tokens::handler(ctx, bump, amount)
     }
 
-
-    pub fn liquidate_cpi(
-        ctx: Context<Liquidate>,
-        amount: Amount,
-        min_collateral: u64,
-    ) -> Result<()> {
-        instructions::liquidate::handler(ctx, amount, min_collateral)
-    }
+    // This ix is quite large, the program may not have space for it, or you may need to Box Accounts.
+    // pub fn liquidate_cpi(
+    //     ctx: Context<Liquidate>,
+    //     amount: Amount,
+    //     min_collateral: u64,
+    // ) -> Result<()> {
+    //     instructions::liquidate::handler(ctx, amount, min_collateral)
+    // }
 }
 
 pub const TOKENS: u8 = 0;

@@ -56,6 +56,8 @@ pub struct Liquidate<'info> {
     #[account(mut)]
     pub payer_account: UncheckedAccount<'info>,
 
+    /// The liquidator's own obligation, which will seize the collateral notes
+    /// CHECK: Checked by PsyLend
     #[account(mut)]
     pub receiver_obligation: UncheckedAccount<'info>,
 

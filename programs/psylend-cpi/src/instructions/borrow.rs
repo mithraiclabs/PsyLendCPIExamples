@@ -70,6 +70,7 @@ pub fn handler(ctx: Context<Borrow>, bump: u8, amount: Amount) -> Result<()> {
         ctx.accounts.loan_note_mint.to_account_info(),
         ctx.accounts.borrower.to_account_info(),
         ctx.accounts.loan_account.to_account_info(),
+        ctx.accounts.receiver_account.to_account_info(),
         ctx.accounts.token_program.to_account_info(),
         ctx.accounts.psylend_program.to_account_info(),
     ];

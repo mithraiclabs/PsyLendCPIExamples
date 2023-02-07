@@ -14,14 +14,22 @@ import {
   workspace,
 } from "@project-serum/anchor";
 import {
+  AccountLayout,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccount,
+  createCloseAccountInstruction,
+  createInitializeAccountInstruction,
   getAccount,
   getAssociatedTokenAddress,
   getAssociatedTokenAddressSync,
+  getMinimumBalanceForRentExemptAccount,
+  NATIVE_MINT,
   TOKEN_PROGRAM_ID,
   TYPE_SIZE,
 } from "@solana/spl-token";
 import {
+  Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey,
   SystemProgram,
   SYSVAR_RENT_PUBKEY,
@@ -82,6 +90,10 @@ describe("PsyLend CPI examples", () => {
    */
   let usdcTokenAccountKey: PublicKey;
   /**
+   * An ATA for wrapped Sol for this wallet.
+   */
+  let wSolTokenAccountKey: PublicKey;
+  /**
    * Deposit note account for USDC, a pda opened with initDepositAccount.
    * Notes in this account are not able to be used as collateral
    */
@@ -93,11 +105,19 @@ describe("PsyLend CPI examples", () => {
    */
   let usdcCollateralAccountKey: PublicKey;
   let usdcCollateralAccountBump: number;
+  /**
+   * Loan note account for Sol (or wSol), a pad opened with initLoanAccount.
+   */
+  let solLoanAccountKey: PublicKey;
+  let solLoanAccountBump: number;
 
   /**
    * Many instructions, for example deposit, require reserves to be accrued beforehand.
    */
   let accrueUsdcIx: TransactionInstruction;
+  let accrueSolIx: TransactionInstruction;
+  let refreshUsdcIx: TransactionInstruction;
+  let refreshSolIx: TransactionInstruction;
 
   before(async () => {
     let fetchMarket = psyLendProgram.account.market.fetch(marketKey);
@@ -119,6 +139,51 @@ describe("PsyLend CPI examples", () => {
     solReserve = await fetchSolReserve;
     usdcReserve = await fetchUsdcReserve;
     btcPutReserve = await fetchBtcPutReserve;
+
+    // Various instructions need to accrue interest before they can be called. Send this ix in the
+    // same tx.
+    accrueUsdcIx = await program.methods
+      .accrueInterestCpi()
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        reserve: usdcReserveKey,
+        feeNoteVault: usdcReserve.feeNoteVault,
+        depositNoteMint: usdcReserve.depositNoteMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+    accrueSolIx = await program.methods
+      .accrueInterestCpi()
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        reserve: solReserveKey,
+        feeNoteVault: solReserve.feeNoteVault,
+        depositNoteMint: solReserve.depositNoteMint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+    refreshUsdcIx = await program.methods
+      .refreshReserveCpi()
+      .accounts({
+        market: marketKey,
+        reserve: usdcReserveKey,
+        pythOraclePrice: usdcReserve.pythOraclePrice,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+    refreshSolIx = await program.methods
+      .refreshReserveCpi()
+      .accounts({
+        market: marketKey,
+        reserve: solReserveKey,
+        pythOraclePrice: solReserve.pythOraclePrice,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
 
     if (verbose) {
       const bal = await provider.connection.getBalance(wallet.publicKey);
@@ -272,18 +337,6 @@ describe("PsyLend CPI examples", () => {
     let amount = types.Amount.tokens(
       new BN(1 * 10 ** Math.abs(usdcReserve.exponent))
     );
-    accrueUsdcIx = await program.methods
-      .acrrueInterestCpi()
-      .accounts({
-        market: marketKey,
-        marketAuthority: marketAuthority,
-        reserve: usdcReserveKey,
-        feeNoteVault: usdcReserve.feeNoteVault,
-        depositNoteMint: usdcReserve.depositNoteMint,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        psylendProgram: psyLendProgram.programId,
-      })
-      .instruction();
 
     const depositIx = await program.methods
       .depositCpi(usdcDepositAccountBump, amount)
@@ -379,7 +432,7 @@ describe("PsyLend CPI examples", () => {
       .instruction();
 
     try {
-      await provider.sendAndConfirm(new Transaction().add(ix));
+      await provider.sendAndConfirm(new Transaction().add(accrueUsdcIx, ix));
     } catch (err) {
       console.log(err);
       throw err;
@@ -392,6 +445,401 @@ describe("PsyLend CPI examples", () => {
     } catch (err) {
       assert.ok(false);
     }
+  });
+
+  it("Deposits .5 (USDC) as collateral by CPI", async () => {
+    let depositAccountBefore = await getAccount(
+      provider.connection,
+      usdcDepositAccountKey
+    );
+    let collateralAccountBefore = await getAccount(
+      provider.connection,
+      usdcCollateralAccountKey
+    );
+
+    let amount = types.Amount.tokens(
+      new BN(1 * 10 ** Math.abs(usdcReserve.exponent))
+    );
+
+    const ix = await program.methods
+      .depositCollateralCpi(
+        usdcCollateralAccountBump,
+        usdcDepositAccountBump,
+        amount
+      )
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        reserve: usdcReserveKey,
+        obligation: obligationKey,
+        owner: wallet.publicKey,
+        depositAccount: usdcDepositAccountKey,
+        collateralAccount: usdcCollateralAccountKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(accrueUsdcIx, ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    let depositAccountAfter = await getAccount(
+      provider.connection,
+      usdcDepositAccountKey
+    );
+    let collateralAccountAfter = await getAccount(
+      provider.connection,
+      usdcCollateralAccountKey
+    );
+    assert.equal(
+      Number(depositAccountBefore.amount) - Number(depositAccountAfter.amount),
+      Number(collateralAccountAfter.amount) -
+        Number(collateralAccountBefore.amount)
+    );
+    assert.isAbove(
+      Number(depositAccountBefore.amount),
+      Number(depositAccountAfter.amount)
+    );
+    assert.isBelow(
+      Number(collateralAccountBefore.amount),
+      Number(collateralAccountAfter.amount)
+    );
+  });
+
+  it("Inits loan account (Sol) by CPI", async () => {
+    // Derive the account address before creating it, e.g.
+    // TODO replace with call from /pdas after package bump
+    [solLoanAccountKey, solLoanAccountBump] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("loan"),
+        solReserveKey.toBytes(),
+        obligationKey.toBytes(),
+        wallet.publicKey.toBytes(),
+      ],
+      psyLendProgram.programId
+    );
+    if (verbose) {
+      console.log("creating sol loan acc: " + solLoanAccountKey);
+    }
+
+    const ix = await program.methods
+      .initLoanAccountCpi(solLoanAccountBump)
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        obligation: obligationKey,
+        reserve: solReserveKey,
+        loanNoteMint: solReserve.loanNoteMint,
+        owner: wallet.publicKey,
+        loanAccount: solLoanAccountKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(accrueSolIx, ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    // Exists
+    try {
+      await getAccount(provider.connection, solLoanAccountKey);
+      assert.ok(true);
+    } catch (err) {
+      assert.ok(false);
+    }
+  });
+
+  it("Borrows .001 (SOL) by CPI", async () => {
+    // Sol generally creates a Wsol account, which is closed at the end of the operation
+    const solAcc = Keypair.generate();
+    await provider.sendAndConfirm(
+      new Transaction().add(
+        SystemProgram.createAccount({
+          fromPubkey: wallet.publicKey,
+          newAccountPubkey: solAcc.publicKey,
+          lamports: await getMinimumBalanceForRentExemptAccount(
+            provider.connection
+          ),
+          space: AccountLayout.span,
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        // Extra funds are required here to repay the loan (due to interest/fees)
+        SystemProgram.transfer({
+          fromPubkey: wallet.publicKey,
+          toPubkey: solAcc.publicKey,
+          lamports: 1 * LAMPORTS_PER_SOL,
+        }),
+        createInitializeAccountInstruction(
+          solAcc.publicKey,
+          NATIVE_MINT,
+          wallet.publicKey,
+          TOKEN_PROGRAM_ID
+        )
+      ),
+      [solAcc]
+    );
+    wSolTokenAccountKey = solAcc.publicKey;
+
+    let amount = types.Amount.tokens(
+      new BN(0.001 * 10 ** Math.abs(solReserve.exponent))
+    );
+
+    let borrowAccountBefore = await getAccount(
+      provider.connection,
+      solLoanAccountKey
+    );
+    let wsolAccountBefore = await getAccount(
+      provider.connection,
+      wSolTokenAccountKey
+    );
+
+    const ix = await program.methods
+      .borrowCpi(solLoanAccountBump, amount)
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        obligation: obligationKey,
+        reserve: solReserveKey,
+        vault: solReserve.vault,
+        loanNoteMint: solReserve.loanNoteMint,
+        borrower: wallet.publicKey,
+        loanAccount: solLoanAccountKey,
+        receiverAccount: wSolTokenAccountKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(
+        new Transaction().add(
+          accrueSolIx,
+          accrueUsdcIx,
+          refreshUsdcIx,
+          refreshSolIx,
+          ix
+        )
+      );
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    let borrowAccountAfter = await getAccount(
+      provider.connection,
+      solLoanAccountKey
+    );
+    let wsolAccountAfter = await getAccount(
+      provider.connection,
+      wSolTokenAccountKey
+    );
+    if (verbose) {
+      console.log(
+        "sol loan notes borrowed initially (includes origination fee): " +
+          borrowAccountAfter.amount.toString()
+      );
+    }
+
+    assert.isAbove(
+      Number(borrowAccountAfter.amount),
+      Number(borrowAccountBefore.amount)
+    );
+    assert.isAbove(
+      Number(wsolAccountAfter.amount),
+      Number(wsolAccountBefore.amount)
+    );
+  });
+
+  it("Repays full balance (SOL) by CPI", async () => {
+    // Fees and interest accumulate, so to get the actual repay amount, query the account.
+    let borrowAccountBefore = await getAccount(
+      provider.connection,
+      solLoanAccountKey
+    );
+
+    let wsolAccountBefore = await getAccount(
+      provider.connection,
+      wSolTokenAccountKey
+    );
+
+    console.log(
+      "loan notes owed (after interest, fees, etc): " +
+        borrowAccountBefore.amount.toString()
+    );
+
+    let amount = types.Amount.loanNotes(
+      new BN(borrowAccountBefore.amount.toString())
+    );
+
+    const ix = await program.methods
+      .repayCpi(amount)
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        obligation: obligationKey,
+        reserve: solReserveKey,
+        vault: solReserve.vault,
+        loanNoteMint: solReserve.loanNoteMint,
+        loanAccount: solLoanAccountKey,
+        payerAccount: wSolTokenAccountKey,
+        payer: wallet.publicKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(
+        new Transaction().add(
+          accrueSolIx,
+          accrueUsdcIx,
+          refreshUsdcIx,
+          refreshSolIx,
+          ix
+        )
+      );
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    let borrowAccountAfter = await getAccount(
+      provider.connection,
+      solLoanAccountKey
+    );
+    let wsolAccountAfter = await getAccount(
+      provider.connection,
+      wSolTokenAccountKey
+    );
+
+    assert.equal(Number(borrowAccountAfter.amount), 0);
+    assert.isBelow(
+      Number(wsolAccountAfter.amount),
+      Number(wsolAccountBefore.amount)
+    );
+  });
+
+  it("Closes wsol account, recovers SOL", async () => {
+    // Typically you will close the Wsol account once done with it, moving Sol to the wallet
+    await provider.sendAndConfirm(
+      new Transaction().add(
+        createCloseAccountInstruction(
+          wSolTokenAccountKey,
+          wallet.publicKey,
+          wallet.publicKey,
+          [],
+          TOKEN_PROGRAM_ID
+        )
+      )
+    );
+  });
+
+  it("Closes loan account (SOL) by CPI", async () => {
+    const ix = await program.methods
+      .closeLoanAccountCpi()
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        obligation: obligationKey,
+        owner: wallet.publicKey,
+        loanAccount: solLoanAccountKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(accrueUsdcIx, ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    // Doesn't exist
+    try {
+      await getAccount(provider.connection, solLoanAccountKey);
+      assert.ok(false);
+    } catch (err) {
+      if (verbose) {
+        console.log(solLoanAccountKey + " doesn't exist");
+      }
+      assert.ok(true);
+    }
+  });
+
+  it("Withdraws full balance (USDC) of collateral by CPI", async () => {
+    let depositAccountBefore = await getAccount(
+      provider.connection,
+      usdcDepositAccountKey
+    );
+    let collateralAccountBefore = await getAccount(
+      provider.connection,
+      usdcCollateralAccountKey
+    );
+
+    // Here the balance will grow due to interest, etc.
+    let amount = types.Amount.depositNotes(
+      new BN(Number(collateralAccountBefore.amount.toString()))
+    );
+
+    if (verbose) {
+      console.log(
+        "Collateral balance (in notes, after interest, fees, etc): " +
+          collateralAccountBefore.amount.toString()
+      );
+    }
+
+    const ix = await program.methods
+      .withdrawCollateralCpi(
+        usdcCollateralAccountBump,
+        usdcDepositAccountBump,
+        amount
+      )
+      .accounts({
+        market: marketKey,
+        marketAuthority: marketAuthority,
+        reserve: usdcReserveKey,
+        obligation: obligationKey,
+        owner: wallet.publicKey,
+        depositAccount: usdcDepositAccountKey,
+        collateralAccount: usdcCollateralAccountKey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        psylendProgram: psyLendProgram.programId,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(
+        new Transaction().add(accrueUsdcIx, refreshUsdcIx, ix)
+      );
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+
+    let depositAccountAfter = await getAccount(
+      provider.connection,
+      usdcDepositAccountKey
+    );
+    let collateralAccountAfter = await getAccount(
+      provider.connection,
+      usdcCollateralAccountKey
+    );
+    assert.equal(Number(collateralAccountAfter.amount), 0);
+    assert.isBelow(
+      Number(depositAccountBefore.amount),
+      Number(depositAccountAfter.amount)
+    );
   });
 
   it("Closes collateral account (USDC) by CPI", async () => {
