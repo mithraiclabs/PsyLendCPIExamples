@@ -58,6 +58,7 @@ const verbose = true;
 
 describe("PsyLend CPI examples", () => {
   const provider = AnchorProvider.env();
+  const con = provider.connection;
   anchor.setProvider(provider);
   const wallet = provider.wallet as Wallet;
   const program: Program<PsylendCpi> = workspace.PsylendCpi;
@@ -186,13 +187,13 @@ describe("PsyLend CPI examples", () => {
       .instruction();
 
     if (verbose) {
-      const bal = await provider.connection.getBalance(wallet.publicKey);
-      console.log("Cluster: " + provider.connection.rpcEndpoint);
+      const bal = await con.getBalance(wallet.publicKey);
+      console.log("Cluster: " + con.rpcEndpoint);
       console.log("Program id: " + program.programId);
       console.log("Psylend id: " + psyLendProgram.programId);
       console.log("");
       console.log("Wallet key: " + wallet.publicKey);
-      console.log("wallet initial SOL balance: " + bal);
+      console.log("wallet initial SOL balance: " + bal.toLocaleString());
       console.log("");
       console.log("Market key: " + marketKey);
       console.log("Market auth: " + marketAuthority);
@@ -325,14 +326,8 @@ describe("PsyLend CPI examples", () => {
       TOKEN_PROGRAM_ID,
       ASSOCIATED_TOKEN_PROGRAM_ID
     );
-    let usdcAccountBefore = await getAccount(
-      provider.connection,
-      usdcTokenAccountKey
-    );
-    let depositAccountBefore = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let usdcAccountBefore = await getAccount(con, usdcTokenAccountKey);
+    let depositAccountBefore = await getAccount(con, usdcDepositAccountKey);
 
     let amount = types.Amount.tokens(
       new BN(1 * 10 ** Math.abs(usdcReserve.exponent))
@@ -363,14 +358,8 @@ describe("PsyLend CPI examples", () => {
       throw err;
     }
 
-    let usdcAccountAfter = await getAccount(
-      provider.connection,
-      usdcTokenAccountKey
-    );
-    let depositAccountAfter = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let usdcAccountAfter = await getAccount(con, usdcTokenAccountKey);
+    let depositAccountAfter = await getAccount(con, usdcDepositAccountKey);
 
     if (verbose) {
       console.log(
@@ -440,7 +429,7 @@ describe("PsyLend CPI examples", () => {
 
     // Exists
     try {
-      await getAccount(provider.connection, usdcDepositAccountKey);
+      await getAccount(con, usdcDepositAccountKey);
       assert.ok(true);
     } catch (err) {
       assert.ok(false);
@@ -448,12 +437,9 @@ describe("PsyLend CPI examples", () => {
   });
 
   it("Deposits .5 (USDC) as collateral by CPI", async () => {
-    let depositAccountBefore = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let depositAccountBefore = await getAccount(con, usdcDepositAccountKey);
     let collateralAccountBefore = await getAccount(
-      provider.connection,
+      con,
       usdcCollateralAccountKey
     );
 
@@ -487,12 +473,9 @@ describe("PsyLend CPI examples", () => {
       throw err;
     }
 
-    let depositAccountAfter = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let depositAccountAfter = await getAccount(con, usdcDepositAccountKey);
     let collateralAccountAfter = await getAccount(
-      provider.connection,
+      con,
       usdcCollateralAccountKey
     );
     assert.equal(
@@ -552,7 +535,7 @@ describe("PsyLend CPI examples", () => {
 
     // Exists
     try {
-      await getAccount(provider.connection, solLoanAccountKey);
+      await getAccount(con, solLoanAccountKey);
       assert.ok(true);
     } catch (err) {
       assert.ok(false);
@@ -567,9 +550,7 @@ describe("PsyLend CPI examples", () => {
         SystemProgram.createAccount({
           fromPubkey: wallet.publicKey,
           newAccountPubkey: solAcc.publicKey,
-          lamports: await getMinimumBalanceForRentExemptAccount(
-            provider.connection
-          ),
+          lamports: await getMinimumBalanceForRentExemptAccount(con),
           space: AccountLayout.span,
           programId: TOKEN_PROGRAM_ID,
         }),
@@ -594,14 +575,8 @@ describe("PsyLend CPI examples", () => {
       new BN(0.001 * 10 ** Math.abs(solReserve.exponent))
     );
 
-    let borrowAccountBefore = await getAccount(
-      provider.connection,
-      solLoanAccountKey
-    );
-    let wsolAccountBefore = await getAccount(
-      provider.connection,
-      wSolTokenAccountKey
-    );
+    let borrowAccountBefore = await getAccount(con, solLoanAccountKey);
+    let wsolAccountBefore = await getAccount(con, wSolTokenAccountKey);
 
     const ix = await program.methods
       .borrowCpi(solLoanAccountBump, amount)
@@ -635,14 +610,8 @@ describe("PsyLend CPI examples", () => {
       throw err;
     }
 
-    let borrowAccountAfter = await getAccount(
-      provider.connection,
-      solLoanAccountKey
-    );
-    let wsolAccountAfter = await getAccount(
-      provider.connection,
-      wSolTokenAccountKey
-    );
+    let borrowAccountAfter = await getAccount(con, solLoanAccountKey);
+    let wsolAccountAfter = await getAccount(con, wSolTokenAccountKey);
     if (verbose) {
       console.log(
         "sol loan notes borrowed initially (includes origination fee): " +
@@ -662,15 +631,9 @@ describe("PsyLend CPI examples", () => {
 
   it("Repays full balance (SOL) by CPI", async () => {
     // Fees and interest accumulate, so to get the actual repay amount, query the account.
-    let borrowAccountBefore = await getAccount(
-      provider.connection,
-      solLoanAccountKey
-    );
+    let borrowAccountBefore = await getAccount(con, solLoanAccountKey);
 
-    let wsolAccountBefore = await getAccount(
-      provider.connection,
-      wSolTokenAccountKey
-    );
+    let wsolAccountBefore = await getAccount(con, wSolTokenAccountKey);
 
     console.log(
       "loan notes owed (after interest, fees, etc): " +
@@ -713,14 +676,8 @@ describe("PsyLend CPI examples", () => {
       throw err;
     }
 
-    let borrowAccountAfter = await getAccount(
-      provider.connection,
-      solLoanAccountKey
-    );
-    let wsolAccountAfter = await getAccount(
-      provider.connection,
-      wSolTokenAccountKey
-    );
+    let borrowAccountAfter = await getAccount(con, solLoanAccountKey);
+    let wsolAccountAfter = await getAccount(con, wSolTokenAccountKey);
 
     assert.equal(Number(borrowAccountAfter.amount), 0);
     assert.isBelow(
@@ -767,7 +724,7 @@ describe("PsyLend CPI examples", () => {
 
     // Doesn't exist
     try {
-      await getAccount(provider.connection, solLoanAccountKey);
+      await getAccount(con, solLoanAccountKey);
       assert.ok(false);
     } catch (err) {
       if (verbose) {
@@ -778,12 +735,9 @@ describe("PsyLend CPI examples", () => {
   });
 
   it("Withdraws full balance (USDC) of collateral by CPI", async () => {
-    let depositAccountBefore = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let depositAccountBefore = await getAccount(con, usdcDepositAccountKey);
     let collateralAccountBefore = await getAccount(
-      provider.connection,
+      con,
       usdcCollateralAccountKey
     );
 
@@ -827,12 +781,9 @@ describe("PsyLend CPI examples", () => {
       throw err;
     }
 
-    let depositAccountAfter = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let depositAccountAfter = await getAccount(con, usdcDepositAccountKey);
     let collateralAccountAfter = await getAccount(
-      provider.connection,
+      con,
       usdcCollateralAccountKey
     );
     assert.equal(Number(collateralAccountAfter.amount), 0);
@@ -867,7 +818,7 @@ describe("PsyLend CPI examples", () => {
 
     // Doesn't exist
     try {
-      await getAccount(provider.connection, usdcDepositAccountKey);
+      await getAccount(con, usdcDepositAccountKey);
       assert.ok(false);
     } catch (err) {
       if (verbose) {
@@ -878,14 +829,8 @@ describe("PsyLend CPI examples", () => {
   });
 
   it("Executes a withdraw (.5 USDC) by CPI", async () => {
-    let usdcAccountBefore = await getAccount(
-      provider.connection,
-      usdcTokenAccountKey
-    );
-    let depositAccountBefore = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let usdcAccountBefore = await getAccount(con, usdcTokenAccountKey);
+    let depositAccountBefore = await getAccount(con, usdcDepositAccountKey);
 
     let amount = types.Amount.tokens(
       new BN(0.5 * 10 ** Math.abs(usdcReserve.exponent))
@@ -913,14 +858,8 @@ describe("PsyLend CPI examples", () => {
       throw err;
     }
 
-    let usdcAccountAfter = await getAccount(
-      provider.connection,
-      usdcTokenAccountKey
-    );
-    let depositAccountAfter = await getAccount(
-      provider.connection,
-      usdcDepositAccountKey
-    );
+    let usdcAccountAfter = await getAccount(con, usdcTokenAccountKey);
+    let depositAccountAfter = await getAccount(con, usdcDepositAccountKey);
 
     if (verbose) {
       console.log(
@@ -948,14 +887,11 @@ describe("PsyLend CPI examples", () => {
   });
 
   it("Closes deposit account (.5 USDC remaining) by CPI", async () => {
-    let usdcAccountBefore = await getAccount(
-      provider.connection,
-      usdcTokenAccountKey
-    );
+    let usdcAccountBefore = await getAccount(con, usdcTokenAccountKey);
 
     // exists
     try {
-      await getAccount(provider.connection, usdcDepositAccountKey);
+      await getAccount(con, usdcDepositAccountKey);
       assert.ok(true);
     } catch (err) {
       assert.ok(false);
@@ -984,13 +920,10 @@ describe("PsyLend CPI examples", () => {
       throw err;
     }
 
-    let usdcAccountAfter = await getAccount(
-      provider.connection,
-      usdcTokenAccountKey
-    );
+    let usdcAccountAfter = await getAccount(con, usdcTokenAccountKey);
     // Doesn't exist
     try {
-      await getAccount(provider.connection, usdcDepositAccountKey);
+      await getAccount(con, usdcDepositAccountKey);
       assert.ok(false);
     } catch (err) {
       assert.ok(true);
@@ -1050,7 +983,7 @@ describe("PsyLend CPI examples", () => {
 
   it("End of test information", async () => {
     if (verbose) {
-      const bal = await provider.connection.getBalance(wallet.publicKey);
+      const bal = await con.getBalance(wallet.publicKey);
       console.log("Test suite done.");
       console.log("wallet final SOL balance: " + bal);
     }
