@@ -1,8 +1,12 @@
 [package]
 name = "psylend-cpi"
 version = "0.1.0"
-description = "PsyLend CPI Examples"
+description = "PsyLend CPI Examples. Borrow-lending protocol on Solana."
 edition = "2021"
+readme = "https://github.com/mithraiclabs/PsyLendCPIExamples/blob/master/README.md"
+authors = ["PsyOptions <contact@psyoptions.io>"]
+license = "AGPL-3.0-or-later"
+keywords = ["psylend", "psyoptions", "psyfi", "solana", "anchor"]
 
 [lib]
 crate-type = ["cdylib", "lib"]

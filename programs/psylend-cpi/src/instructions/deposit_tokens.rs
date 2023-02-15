@@ -57,9 +57,9 @@ pub struct DepositTokens<'info> {
     pub psylend_program: UncheckedAccount<'info>,
 }
 
-pub fn handler(ctx: Context<DepositTokens>, bump: u8, amount: Amount) -> Result<()> {
+pub fn handler(ctx: Context<DepositTokens>, amount: Amount) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, bump, amount)?;
+    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, amount)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -80,7 +80,6 @@ pub fn handler(ctx: Context<DepositTokens>, bump: u8, amount: Amount) -> Result<
 fn get_cpi_instruction(
     ctx: &Context<DepositTokens>,
     program_id: Pubkey,
-    bump: u8,
     amount: Amount,
 ) -> Result<Instruction> {
     let instruction = Instruction {
@@ -96,22 +95,21 @@ fn get_cpi_instruction(
             AccountMeta::new(ctx.accounts.deposit_source.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
         ],
-        data: get_ix_data(bump, amount),
+        data: get_ix_data(amount),
     };
     Ok(instruction)
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
 struct CpiArgs {
-    bump: u8,
     amount: Amount
 }
 
-fn get_ix_data(bump: u8, amount: Amount) -> Vec<u8> {
+fn get_ix_data(amount: Amount) -> Vec<u8> {
     let hash = get_function_hash("global", "deposit_tokens");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
-    let args = CpiArgs { bump, amount };
+    let args = CpiArgs { amount };
     args.serialize(&mut buf).unwrap();
     buf
 }

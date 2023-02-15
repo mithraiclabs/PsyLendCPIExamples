@@ -16,7 +16,7 @@ pub struct InitializeObligation<'info> {
     /// CHECK: Checked by PsyLend
     pub market_authority: UncheckedAccount<'info>,
 
-    /// The user/authority that is responsible for owning this obligation, 
+    /// The user/authority that is responsible for owning this obligation,
     /// typically the user's wallet.
     #[account(mut)]
     pub borrower: Signer<'info>,

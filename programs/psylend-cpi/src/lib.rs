@@ -2,9 +2,11 @@ use anchor_lang::prelude::*;
 
 declare_id!("BVr85VrQhRJAixhUt68bmodrvzv5nQXdUMbuihRWqNGb");
 
+pub mod combinations;
 pub mod constants;
 pub mod instructions;
 pub mod utils;
+use combinations::*;
 use instructions::*;
 
 #[program]
@@ -97,16 +99,26 @@ pub mod psylend_cpi {
         instructions::repay::handler(ctx, amount)
     }
 
-    pub fn deposit_tokens_cpi(ctx: Context<DepositTokens>, bump: u8, amount: Amount) -> Result<()> {
-        instructions::deposit_tokens::handler(ctx, bump, amount)
+    pub fn deposit_tokens_cpi(ctx: Context<DepositTokens>, amount: Amount) -> Result<()> {
+        instructions::deposit_tokens::handler(ctx, amount)
     }
 
-    pub fn withdraw_tokens_cpi(
-        ctx: Context<WithdrawTokens>,
-        bump: u8,
+    pub fn withdraw_tokens_cpi(ctx: Context<WithdrawTokens>, amount: Amount) -> Result<()> {
+        instructions::withdraw_tokens::handler(ctx, amount)
+    }
+
+    pub fn accrue_deposit_tokens_cpi(
+        ctx: Context<AccrueAndDepositTokens>,
         amount: Amount,
     ) -> Result<()> {
-        instructions::withdraw_tokens::handler(ctx, bump, amount)
+        combinations::accrue_deposit_token::handler(ctx, amount)
+    }
+
+    pub fn accrue_withdraw_tokens_cpi(
+        ctx: Context<AccrueAndWithdrawTokens>,
+        amount: Amount,
+    ) -> Result<()> {
+        combinations::accrue_withdraw_token::handler(ctx, amount)
     }
 
     // This ix is quite large, the program may not have space for it, or you may need to Box Accounts.
