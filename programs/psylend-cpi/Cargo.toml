@@ -26,4 +26,6 @@ overflow-checks = true
 [dependencies]
 anchor-lang = "0.24.2"
 anchor-spl = { version = "0.24.2", features = ["dex"] }
+bytemuck = { version = "1.7", features = ["derive"] }
+psy-math = "1.0.0"
 

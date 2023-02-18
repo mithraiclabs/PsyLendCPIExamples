@@ -157,6 +157,25 @@ describe("Generic supply-side yield aggregator example", () => {
     }
   });
 
+  it("Read the current interest rate on some reserve", async () => {
+    const ix = await program.methods
+      .getCurrentInterest()
+      .accounts({
+        market: marketKey,
+        reserve: usdcReserveKey,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+    // Check the program log to see the message.
+
+  })
+
   it("Creates external USDC deposit account (not owned by PsyLend)", async () => {
     // Deposit notes will be go into this account after a deposit
     usdcDepositAccountKey = getAssociatedTokenAddressSync(

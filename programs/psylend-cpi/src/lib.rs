@@ -1,13 +1,15 @@
 use anchor_lang::prelude::*;
 
-declare_id!("BVr85VrQhRJAixhUt68bmodrvzv5nQXdUMbuihRWqNGb");
+declare_id!("2BUrizpXHXA43qJxnzRBGpwemtHKVqB3JE3G63NKHbzz");
 
 pub mod combinations;
 pub mod constants;
 pub mod instructions;
+pub mod state;
 pub mod utils;
 use combinations::*;
 use instructions::*;
+//use state::*;
 
 #[program]
 pub mod psylend_cpi {
@@ -120,6 +122,11 @@ pub mod psylend_cpi {
     ) -> Result<()> {
         combinations::accrue_withdraw_token::handler(ctx, amount)
     }
+
+    pub fn get_current_interest(ctx: Context<GetCurrentInterest>) -> Result<()> {
+        combinations::get_current_interest::handler(ctx)
+    }
+    
 
     // This ix is quite large, the program may not have space for it, or you may need to Box Accounts.
     // pub fn liquidate_cpi(

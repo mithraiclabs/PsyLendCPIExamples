@@ -5,7 +5,7 @@ seeds = false
 #psylend_cpi = "BVr85VrQhRJAixhUt68bmodrvzv5nQXdUMbuihRWqNGb"
 
 [programs.devnet]
-psylend_cpi = "BVr85VrQhRJAixhUt68bmodrvzv5nQXdUMbuihRWqNGb"
+psylend_cpi = "2BUrizpXHXA43qJxnzRBGpwemtHKVqB3JE3G63NKHbzz"
 psylend = { address = "8bpiM4yhcLYMSeCBTVFWisneXPQQWPYSA5ZpMm4DKAgT", idl = "./deps/psylend.json"}
 cpi_dummy = { address = "Ev6JrN5HqrKwXhoB9jucLdn51yzzDvWmBHkubXWavRio", idl = "./deps/cpi_dummy.json"}
 
@@ -20,7 +20,7 @@ cluster = "devnet"
 wallet = "/home/fish/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-#test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/basic-integrator.ts"
+#test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/basic-integrator.ts"
 #test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/dummy-cpi.ts"
 #test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/psylend-cpi.ts"
