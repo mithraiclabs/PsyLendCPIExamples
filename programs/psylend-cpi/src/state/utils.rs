@@ -1,4 +1,6 @@
-use anchor_lang::prelude::Pubkey;
+use std::ops::{Deref, DerefMut};
+
+use anchor_lang::prelude::*;
 use bytemuck::{Pod, Zeroable};
 use psy_math::Number;
 
@@ -15,6 +17,43 @@ impl<const SIZE: usize> std::fmt::Debug for FixedBuf<SIZE> {
         write!(f, "FixedBuf<{}>", SIZE)
     }
 }
+impl<const SIZE: usize> AsRef<[u8]> for FixedBuf<SIZE> {
+    fn as_ref(&self) -> &[u8] {
+        &self.data
+    }
+}
+impl<const SIZE: usize> AsMut<[u8]> for FixedBuf<SIZE> {
+    fn as_mut(&mut self) -> &mut [u8] {
+        &mut self.data
+    }
+}
+impl<const SIZE: usize> Deref for FixedBuf<SIZE> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+impl<const SIZE: usize> DerefMut for FixedBuf<SIZE> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
+    }
+}
+impl<const SIZE: usize> borsh::BorshDeserialize for FixedBuf<SIZE> {
+    fn deserialize(buf: &mut &[u8]) -> std::io::Result<Self> {
+        let mut data = [0u8; SIZE];
+        data.copy_from_slice(buf);
+
+        Ok(FixedBuf { data })
+    }
+}
+impl<const SIZE: usize> borsh::BorshSerialize for FixedBuf<SIZE> {
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()> {
+        let _ = writer.write(&self.data)?;
+        Ok(())
+    }
+}
+
 
 /// Workaround for the fact that `Pubkey` doesn't implement the
 /// `Pod` trait (even though it meets the requirements), and there

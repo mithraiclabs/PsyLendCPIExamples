@@ -62,14 +62,26 @@ pub fn handler(ctx: Context<InitializeDepositAccount>, bump: u8) -> Result<()> {
         ctx.accounts.psylend_program.to_account_info(),
     ];
 
-    let seeds = &[
-        b"deposits".as_ref(),
-        &ctx.accounts.reserve.key().to_bytes()[..],
-        &ctx.accounts.depositor.key().to_bytes()[..],
-    ];
-    let signers_seeds = &[&seeds[..]];
+    if bump == 254 {
+        let seeds = &[
+            b"deposits".as_ref(),
+            &ctx.accounts.reserve.key().to_bytes()[..],
+            &ctx.accounts.depositor.key().to_bytes()[..],
+            // &[bump]
+        ];
+        let signers_seeds = &[&seeds[..]];
+        invoke_signed(&instruction, &account_infos, signers_seeds)?;
+    } else {
+        let seeds = &[
+            b"deposits".as_ref(),
+            &ctx.accounts.reserve.key().to_bytes()[..],
+            &ctx.accounts.depositor.key().to_bytes()[..],
+            &[bump],
+        ];
+        let signers_seeds = &[&seeds[..]];
+        invoke_signed(&instruction, &account_infos, signers_seeds)?;
+    }
 
-    invoke_signed(&instruction, &account_infos, signers_seeds)?;
     Ok(())
 }
 

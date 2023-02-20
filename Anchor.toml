@@ -20,7 +20,7 @@ cluster = "devnet"
 wallet = "/home/fish/.config/solana/id.json"
 
 [scripts]
-#test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/basic-integrator.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+#test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/basic-integrator.ts"
 #test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/dummy-cpi.ts"
 #test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/psylend-cpi.ts"

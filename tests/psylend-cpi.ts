@@ -506,7 +506,7 @@ describe("PsyLend CPI examples", () => {
       psyLendProgram.programId
     );
     if (verbose) {
-      console.log("creating sol loan acc: " + solLoanAccountKey);
+      console.log("creating sol loan acc: " + solLoanAccountKey + " bump " + solLoanAccountBump);
     }
 
     const ix = await program.methods

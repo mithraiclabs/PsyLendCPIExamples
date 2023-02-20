@@ -23,7 +23,7 @@ pub struct GetCurrentInterest<'info> {
 }
 
 pub fn handler(ctx: Context<GetCurrentInterest>) -> Result<()> {
-    // Markets, reserves, and obligations are all Plain Old Data (POD), so you can read them from bytes!
+    // Markets, reserves, and obligations are all Plain Old Data (POD), and can be read from bytes
     // Don't forget to remove the 8-byte anchor discriminator...
     let market_data = &ctx.accounts.market.try_borrow_data()?[..][8..];
     let market: &Market = get_market_from_bytes(market_data);
@@ -41,7 +41,9 @@ pub fn handler(ctx: Context<GetCurrentInterest>) -> Result<()> {
     // For the most up-to-date information, run accrue_interest on the reserve first, then use:
     // let outstanding_debt = reserve.unwrap_outstanding_debt();
 
-    // rates are stored in Number format, which is 10^15 decimals.
+    // rates are stored in Number format, which is 10^15 decimals
+    // e.g., 16% will be stored as 160,000,000,000,000
+    // and 104% would be stored as 1,040,000,000,000,000
     let utilization_rate = utilization_rate(*outstanding_debt, vault_total);
     let interest_rate = reserve.interest_rate(*outstanding_debt, vault_total);
 

@@ -97,6 +97,7 @@ pub struct MarketRewardState {
 }
 
 /// All reserves under the market cache exchange rate information and various key parameters on the market
+/// 
 /// Size = 15872
 #[derive(Pod, Zeroable, Clone, Copy)]
 #[repr(C)]
