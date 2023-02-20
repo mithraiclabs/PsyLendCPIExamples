@@ -8,7 +8,8 @@
   </h4>
 </div>
 
-Avoid scammers: PsyLend does not have a public crate.
+Avoid scammers: PsyLend does not have a public crate. The CPI crate (this code) is available <a
+href="https://crates.io/crates/psylend-cpi">here</a>
 
 ## Developers
 
