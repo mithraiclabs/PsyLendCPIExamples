@@ -1,7 +1,7 @@
 use crate::{constants::*, utils::get_function_hash, Amount};
 use anchor_lang::{
     prelude::*,
-    solana_program::{instruction::Instruction, program::invoke_signed},
+    solana_program::{instruction::Instruction, program::invoke},
 };
 use anchor_spl::token::Token;
 use std::str::FromStr;
@@ -73,14 +73,7 @@ pub fn handler(ctx: Context<Withdraw>, bump: u8, amount: Amount) -> Result<()> {
         ctx.accounts.token_program.to_account_info(),
     ];
 
-    let seeds = &[
-        b"deposits".as_ref(),
-        &ctx.accounts.reserve.key().to_bytes()[..],
-        &ctx.accounts.depositor.key().to_bytes()[..],
-    ];
-    let signer_seeds = &[&seeds[..]];
-
-    invoke_signed(&instruction, &account_infos, signer_seeds)?;
+    invoke(&instruction, &account_infos)?;
     Ok(())
 }
 
