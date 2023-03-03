@@ -1,3 +1,6 @@
+// Note: Always run this test with `anchor test -- --features devnet`
+// Your wallet must have some SOL and USDC for all tests to pass
+
 import { PsyLend, pdas, types } from "@mithraic-labs/psylend-utils";
 import {
   MarketAccount,
@@ -20,6 +23,7 @@ import {
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
 import {
+  Keypair,
   PublicKey,
   Transaction,
   TransactionInstruction,
@@ -173,8 +177,7 @@ describe("Generic supply-side yield aggregator example", () => {
       throw err;
     }
     // Check the program log to see the message.
-
-  })
+  });
 
   it("Creates external USDC deposit account (not owned by PsyLend)", async () => {
     // Deposit notes will be go into this account after a deposit

@@ -1,3 +1,6 @@
+// Note: Always run this test with `anchor test -- --features devnet`
+// Your wallet must have some SOL and USDC for all tests to pass
+
 import { pdas, PsyLend, types } from "@mithraic-labs/psylend-utils";
 import { deriveMarketAuthority } from "@mithraic-labs/psylend-utils/dist/pdas";
 import {
@@ -185,6 +188,24 @@ describe("PsyLend CPI examples", () => {
         psylendProgram: psyLendProgram.programId,
       })
       .instruction();
+
+    // Accrue needs to run roughly once a week, if it's been more than three weeks since someone
+    // last run this test, it will fail until it catches up, just run it a few times.
+    try {
+      await provider.sendAndConfirm(
+        new Transaction().add(
+          accrueSolIx,
+          accrueSolIx,
+          accrueSolIx,
+          accrueUsdcIx,
+          accrueUsdcIx,
+          accrueUsdcIx
+        )
+      );
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
 
     if (verbose) {
       const bal = await con.getBalance(wallet.publicKey);
@@ -506,7 +527,12 @@ describe("PsyLend CPI examples", () => {
       psyLendProgram.programId
     );
     if (verbose) {
-      console.log("creating sol loan acc: " + solLoanAccountKey + " bump " + solLoanAccountBump);
+      console.log(
+        "creating sol loan acc: " +
+          solLoanAccountKey +
+          " bump " +
+          solLoanAccountBump
+      );
     }
 
     const ix = await program.methods

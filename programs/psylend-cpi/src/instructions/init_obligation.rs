@@ -1,7 +1,7 @@
 use crate::{constants::*, utils::get_function_hash};
 use anchor_lang::{
     prelude::*,
-    solana_program::{instruction::Instruction, program::invoke_signed},
+    solana_program::{instruction::Instruction, program::invoke},
 };
 use anchor_spl::token::Token;
 use std::str::FromStr;
@@ -38,7 +38,6 @@ pub struct InitializeObligation<'info> {
 }
 
 pub fn handler(ctx: Context<InitializeObligation>, bump: u8) -> Result<()> {
-    msg!("ob actual: {:?}", ctx.accounts.obligation.key());
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
     let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, bump)?;
     let account_infos = [
@@ -51,25 +50,8 @@ pub fn handler(ctx: Context<InitializeObligation>, bump: u8) -> Result<()> {
         ctx.accounts.psylend_program.to_account_info(),
     ];
 
-    if bump == 254 {
-        let seeds = &[
-            b"obligation".as_ref(),
-            &ctx.accounts.market.key().to_bytes()[..],
-            &ctx.accounts.borrower.key().to_bytes()[..],
-            //&[bump]
-        ];
-        let signers_seeds = &[&seeds[..]];
-        invoke_signed(&instruction, &account_infos, signers_seeds)?;
-    } else {
-        let seeds = &[
-            b"obligation".as_ref(),
-            &ctx.accounts.market.key().to_bytes()[..],
-            &ctx.accounts.borrower.key().to_bytes()[..],
-            &[bump],
-        ];
-        let signers_seeds = &[&seeds[..]];
-        invoke_signed(&instruction, &account_infos, signers_seeds)?;
-    }
+    invoke(&instruction, &account_infos)?;
+
     Ok(())
 }
 

@@ -31,3 +31,8 @@ href="https://www.npmjs.com/package/@mithraic-labs/psylend-utils">psylend-utils<
 See our <a href="https://docs.psyoptions.io/psy-dao-bug-bounty">bug bounty policy</a>. Note that the PsyLend
 protocol is in scope, however the CPI library is not, as this is only a set of examples. Feel free
 to use the CPI library to look for vulnerabilities in PsyLend.
+
+## Running Tests
+Tests run on devnet using pre-made PsyLend markets and reserves. Use `anchor test -- --features
+devnet`. Your wallet must have some SOL and USDC for all tests to pass, you can get these at <a
+href="https://trade.psyoptions.io/#/faucets">our faucet</a>

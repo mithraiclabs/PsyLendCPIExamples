@@ -1,7 +1,7 @@
 use crate::{constants::*, utils::get_function_hash};
 use anchor_lang::{
     prelude::*,
-    solana_program::{instruction::Instruction, program::invoke_signed},
+    solana_program::{instruction::Instruction, program::invoke},
 };
 use anchor_spl::token::Token;
 use std::str::FromStr;
@@ -66,27 +66,8 @@ pub fn handler(ctx: Context<InitializeCollateralAccount>, bump: u8) -> Result<()
         ctx.accounts.psylend_program.to_account_info(),
     ];
 
-    if bump == 254 {
-        let seeds = &[
-            b"collateral".as_ref(),
-            &ctx.accounts.reserve.key().to_bytes()[..],
-            &ctx.accounts.obligation.key().to_bytes()[..],
-            &ctx.accounts.owner.key().to_bytes()[..],
-            // &[bump]
-        ];
-        let signers_seeds = &[&seeds[..]];
-        invoke_signed(&instruction, &account_infos, signers_seeds)?;
-    } else {
-        let seeds = &[
-            b"collateral".as_ref(),
-            &ctx.accounts.reserve.key().to_bytes()[..],
-            &ctx.accounts.obligation.key().to_bytes()[..],
-            &ctx.accounts.owner.key().to_bytes()[..],
-            &[bump],
-        ];
-        let signers_seeds = &[&seeds[..]];
-        invoke_signed(&instruction, &account_infos, signers_seeds)?;
-    }
+    invoke(&instruction, &account_infos)?;
+
     Ok(())
 }
 
