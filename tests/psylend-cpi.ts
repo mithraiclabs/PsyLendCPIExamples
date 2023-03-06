@@ -1011,7 +1011,7 @@ describe("PsyLend CPI examples", () => {
     if (verbose) {
       const bal = await con.getBalance(wallet.publicKey);
       console.log("Test suite done.");
-      console.log("wallet final SOL balance: " + bal);
+      console.log("wallet final SOL balance: " + bal.toLocaleString());
     }
   });
 });
