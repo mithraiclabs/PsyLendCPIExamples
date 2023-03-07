@@ -33,7 +33,7 @@
 * PsyFi Reserve - A Reserve that tracks a PsyFi asset (a vault token). Vault tokens are valued based
   on the price of the underlying AND the option that the vault sells, meaning vault tokens do NOT
   have a one to one relationship with the underlying asset they represent.
-* Jet Market - All Reserves belong to a Jet Market. This structure caches information from each
+* Psy Market - All Reserves belong to a Psy Market. This structure caches information from each
   Reserve, enabling various instructions to see information about any Reserve without needing to pass
   an additional account.
 * Cache - There are two primary caches: `CachedNoteInfo` aka NOTE and `CachedReserveInfo` aka INFO. 
@@ -77,7 +77,7 @@ corresponds to reward tokens being issued in that period. Other important inform
     * the loan account stores the balance of loan notes, 
     * the collateral account stores the balance of deposit notes used as collateral. 
 
-  These accounts are all PDAs derived per user per reserve, and the Jet Market acts as the token
+  These accounts are all PDAs derived per user per reserve, and the Psy Market acts as the token
   acount authority.
 * Reserve Accounts - Each reserve has the following derived accounts: 
     * vault - holds the reserve's actual token assets, not to be confused with PsyFi Vaults, 
@@ -95,7 +95,7 @@ These accounts are all PDAs derived per reserve.
   Reserve and PsyFi vault use the same currency, oracle, etc.
 * Number - A U192 value, which uses 15 decimal places. Note that attempting to load a Number in TS/JS
   will fail due to trailing decimal places, load it as a BN and divide by 10e15 to get the whole
-  number value, or use one the `jetBNToNumber` in `math.ts` (in package) to get the actual floating
+  number value, or use one the `psyBNToNumber` in `math.ts` (in package) to get the actual floating
   point value, or use one of the functions in `tools.ts` (in package) if the Number is in Buffer
   format (like when reading from Obligation directly).
 * Amount - Stores one of three kinds of units (Token, Deposit Note, Loan Note), and a u64 value.
@@ -156,8 +156,8 @@ send it when an updated cache is required.
 None.
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * Reserve
 * FeeNoteVault - can be extracted from `reserve`
 * DepositNoteMint - can be extracted from `reserve`
@@ -181,7 +181,7 @@ Used for accruing rewards for a user's `Position` in an `Obligation`.
 ### Arguments:
 * side: 0 for collateral, 1 for loan
 ### Accounts:
-* Market - jet market
+* Market - Psy market
 * Reserve - reserve to modify 
 * Obligation - obligation account
 * Owner - owner of obligation
@@ -204,8 +204,8 @@ has borrowed or used as collateral
 * Amount - quantity to borrow, generally specified in tokens
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * Reserve
 * Obligation - user's obligation on this market, must be initialized
 * Vault - can be extracted from `reserve`
@@ -227,7 +227,7 @@ Used for claiming reward tokens in exchange for reward units stored in an `Oblig
 ### Arguments:
 * period_to_claim: should be between 0 to 95.
 ### Accounts:
-* Market - jet market
+* Market - Psy market
 * MarketAuthority - authority of reward token account
 * MarketReward 
 * Obligation - obligation account
@@ -279,8 +279,8 @@ Only the reserve being deposited into needs to be accrued, run the `accrue_inter
 * Amount - quantity to deposit, specified in tokens or deposit notes
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * DepositSource - tokens come from this account
 * DepositAccount - Deposit notes will go to this account. For `deposit`, user's deposit account,
   which must be initialized. For `deposit_tokens`, may be any account. 
@@ -316,8 +316,8 @@ Only the reserve being deposited into needs to be accrued, run the `accrue_inter
 * Amount - quantity to transfer, specified in tokens or deposit notes
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * Obligation - user's obligation on this market, must be initialized
 * DepositAccount - user's deposit account, must be initialized
 * CollateralAccount - user's collateral account, must be initialized
@@ -329,6 +329,10 @@ Only the reserve being deposited into needs to be accrued, run the `accrue_inter
  
 User deposit, collateral, and obligation accounts must have been initialized beforehand. User must
 deposit some funds before calling this ix. Can be bundled in the same transaction as a deposit.
+
+The Collateral account and Obligation must be owned by the same user, and the Deposit account must be
+owned by the Depositor (the Signer). If a collateral account already exists for that user, a third-party can pass
+their own Deposit account, and the user's Collateral/Obligation accounts, to give the notes to that user.
 
 ********************************************************************************
 ## init_collateral_account, init_deposit_account, init_loan_account, init_obligation
@@ -347,6 +351,10 @@ appropriate ix to initialize the account before using it.
  
 A getOrInit utility for each of these accounts is available in Instructions. Obligation is
 per-user per-market, while others are per-user per-reserve.
+
+Init_deposit_account is permisionless: any "Payer" can open an account for any "Depositor", and the
+"Depositor" will own that account. This is useful for third-parties who want to give PsyLend notes
+to a user that does not have any PsyLend accounts yet.
 
 ********************************************************************************
 ## init_discounts, init_market, init_psyfi_reserve, init_reserve
@@ -382,7 +390,7 @@ This should be run once after initialization of `Market`.
 * minWithdrawalDuration - min duration from start of period, after which rewards claim is allowed
 
 ### Accounts:
-* Market - jet market
+* Market - Psy market
 * Owner - owner of market
 * MarketReward - market reward to be initialized
 * SystemProgram
@@ -422,8 +430,8 @@ their collateral and repay a portion of their loan.
   Can supply 0 here to liquidate regardless of the collateral seized.
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * Obligation - user's obligation on this market, must be initialized
 * Reserve - the reserve with the DEBT borrowed
 * CollateralReserve - reserve with COLLATERAL to seize
@@ -467,7 +475,7 @@ crank this instruction otherwise.
 None
 
 ### Accounts:
-* Market - jet market the reserve is under
+* Market - Psy market the reserve is under
 * Reserve
 * (PsyFi only) VaultAccount - the vault where the vault tokens this reserve users come from
 * pythOraclePrice - can be extracted from `reserve`
@@ -487,8 +495,8 @@ has borrowed or used as collateral
 * Amount - quantity to repay, specified in tokens or loan notes
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * Payer - aka UserAddress, typically the user's wallet
 * Reserve
 * Vault - can be extracted from `reserve`
@@ -505,18 +513,18 @@ None
 ## set_market_flags
 
 ### Description: 
-Adjusts parameters of a Jet Market to halt borrows/withdraws, repays, or withdraws on the entire
+Adjusts parameters of a Psy Market to halt borrows/withdraws, repays, or withdraws on the entire
 market.
 
-The Jet Market owner must sign this tx.
+The Psy Market owner must sign this tx.
 
 ### Arguments:
 * Flags - A u64 that encodes market parameters: HALT_BORROWS = 1 << 0, HALT_REPAYS = 1 << 1,
   HALT_DEPOSITS = 1 << 2, supports combinations by ORing or adding together bits. HALT_NOTHING = 0
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Owner - administrator/owner of the jet market, must sign.
+* Market - Psy market the reserve is under
+* Owner - administrator/owner of the Psy market, must sign.
  
 ### Notes:
  
@@ -526,16 +534,16 @@ Deposits and Withdraws are disabled/enabled together.
 ## set_market_owner
 
 ### Description: 
-Transfers ownership of this Jet Market to a new owner
+Transfers ownership of this Psy Market to a new owner
 
-The Jet Market owner must sign this tx.
+The Psy Market owner must sign this tx.
 
 ### Arguments:
 * NewOwner - The public key of the new owner.
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Owner - administrator/owner of the jet market, must sign.
+* Market - Psy market the reserve is under
+* Owner - administrator/owner of the Psy market, must sign.
  
 ### Notes:
  
@@ -603,7 +611,7 @@ The market administrator use this ix to update the fees, borrow rates, etc for a
  Does not update the `deposit_reward_multiplier` and `borrow_reward_multiplier`, use
  `update_reserve_reward` to modify those fields.
 
-The Jet Market owner must sign this tx.
+The Psy Market owner must sign this tx.
 
 ### Arguments:
 Config - A reserve config contains the following, which are all numbers unless otherwise specified:
@@ -616,9 +624,9 @@ confidenceThreshold
 All rates use the common denominator of 10,000, e.g.  to pass 1%, pass 10,000  * .01 = 100
 
 ### Accounts:
-* Market - jet market the reserve is under
+* Market - Psy market the reserve is under
 * Reserve
-* Owner - administrator/owner of the jet market, must sign.
+* Owner - administrator/owner of the Psy market, must sign.
  
 ### Notes:
  
@@ -630,7 +638,7 @@ None.
 ### Description: 
 The market administrator use this ix to halt borrows, repays, deposits, or withdraws on a specific reserve.
 
-The Jet Market owner must sign this tx.
+The Psy Market owner must sign this tx.
 
 ### Arguments:
 Halts - A single byte encodes which operations to halt. 0 = resume all, 1 = halt deposits, 2 =
@@ -638,13 +646,13 @@ halt borrows, 4 = halt repays, 8 = halt withdraws. Can add to halt multiple, e.g
 deposits and repays only
 
 ### Accounts:
-* Market - jet market the reserve is under
+* Market - Psy market the reserve is under
 * Reserve
-* Owner - administrator/owner of the jet market, must sign.
+* Owner - administrator/owner of the Psy market, must sign.
  
 ### Notes:
  
-The `set_market_flags` does the same for the entire Jet Market. Unlike the `set_market_flags` ix,
+The `set_market_flags` does the same for the entire Psy Market. Unlike the `set_market_flags` ix,
 this ix can halt just deposits or just withdraws, without halting both.
 
 ********************************************************************************
@@ -660,7 +668,7 @@ advance, for any future period, regardless of how far out it is.
 * state_index: period to modify
 * info_index: reward info to modify
 ### Accounts:
-* Market - jet market
+* Market - Psy market
 * Owner - owner of market
 * MarketAuthority - PDA to use as authority of token account
 * MarketReward - market reward to be initialized
@@ -686,7 +694,7 @@ Used for updating `MarketRewardState` in Market to update mutable fields (curren
 ### Arguments:
 * minWithdrawalDuration - min duration from start of period, after which rewards claim is allowed
 ### Accounts:
-* Market - jet market
+* Market - Psy market
 * Owner - owner of market
 
 ********************************************************************************
@@ -699,7 +707,7 @@ Used for updating `Reserve` to the deposit and borrow reward multipliers that wi
 * deposit_reward_multiplier: a number from 0-255
 * borrow_reward_multiplier: a number from 0-255
 ### Accounts:
-* Market - jet market
+* Market - Psy market
 * Owner - owner of market
 * Reserve - reserve to modify 
 
@@ -725,8 +733,8 @@ Requires a general refresh of all reserves the user has borrowed or used as coll
 * Amount - quantity to transfer, specified in tokens or deposit notes
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * Depositor - aka UserAddress, typically the user's wallet, must sign tx.
 * Obligation - user's obligation on this market, must be initialized
 * Reserve
@@ -755,8 +763,8 @@ Only the reserve being withdrawn from needs to be accrued, run the `accrue_inter
 * Amount - quantity to transfer, specified in tokens or deposit notes
 
 ### Accounts:
-* Market - jet market the reserve is under
-* Market Authority- authority for the jet market
+* Market - Psy market the reserve is under
+* Market Authority- authority for the Psy market
 * ReceiverAccount - account where the funds will be sent
 * DepositAccount - For withdraw, the user's deposit account, must be initialized. For
   withdraw_tokens, any token account that holds deposit notes.
@@ -764,6 +772,8 @@ Only the reserve being withdrawn from needs to be accrued, run the `accrue_inter
 * Reserve
 * Vault - can be extracted from `reserve`, holds the same kind of tokens as the receiver
 * DepositNoteMint - can be extracted from `reserve`
+* PsyProgram (withdraw only) - pass the PsyLend program key. Make sure you are passing the correct
+  key (devnet or mainnet)
  
 ### Notes:
  
