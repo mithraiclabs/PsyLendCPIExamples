@@ -60,7 +60,7 @@ pub struct Borrow<'info> {
 
 pub fn handler(ctx: Context<Borrow>, bump: u8, amount: Amount) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, bump, amount)?;
+    let instruction: Instruction = borrow_cpi_instruction(&ctx, psylend_program_id, bump, amount)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -79,7 +79,7 @@ pub fn handler(ctx: Context<Borrow>, bump: u8, amount: Amount) -> Result<()> {
     Ok(())
 }
 
-fn get_cpi_instruction(
+pub fn borrow_cpi_instruction(
     ctx: &Context<Borrow>,
     program_id: Pubkey,
     bump: u8,
@@ -99,22 +99,49 @@ fn get_cpi_instruction(
             AccountMeta::new(ctx.accounts.receiver_account.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
         ],
-        data: get_ix_data(bump, amount),
+        data: borrow_ix_data(bump, amount),
     };
     Ok(instruction)
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-struct CpiArgs {
+pub struct BorrowCpiArgs {
     bump: u8,
     amount: Amount,
 }
 
-fn get_ix_data(bump: u8, amount: Amount) -> Vec<u8> {
+pub fn borrow_ix_data(bump: u8, amount: Amount) -> Vec<u8> {
     let hash = get_function_hash("global", "borrow");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
-    let args = CpiArgs { bump, amount };
+    let args = BorrowCpiArgs { bump, amount };
     args.serialize(&mut buf).unwrap();
     buf
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `Borrow`
+pub fn borrow_cpi_ix(
+    account_infos: &[AccountInfo; 11],
+    program_id: Pubkey,
+    amount: Amount,
+    bump: u8,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new(account_infos[3].key(), false),
+            AccountMeta::new(account_infos[4].key(), false),
+            AccountMeta::new(account_infos[5].key(), false),
+            AccountMeta::new_readonly(account_infos[6].key(), true),
+            AccountMeta::new(account_infos[7].key(), false),
+            AccountMeta::new(account_infos[8].key(), false),
+            AccountMeta::new_readonly(account_infos[9].key(), false),
+        ],
+        data: borrow_ix_data(bump, amount),
+    };
+    Ok(instruction)
 }

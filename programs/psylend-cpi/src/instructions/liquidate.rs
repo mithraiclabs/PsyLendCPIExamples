@@ -79,7 +79,7 @@ pub struct Liquidate<'info> {
 pub fn handler(ctx: Context<Liquidate>, amount: Amount, min_collateral: u64) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
     let instruction: Instruction =
-        get_cpi_instruction(&ctx, psylend_program_id, amount, min_collateral)?;
+        liquidate_cpi_instruction(&ctx, psylend_program_id, amount, min_collateral)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -102,7 +102,7 @@ pub fn handler(ctx: Context<Liquidate>, amount: Amount, min_collateral: u64) -> 
     Ok(())
 }
 
-fn get_cpi_instruction(
+pub fn liquidate_cpi_instruction(
     ctx: &Context<Liquidate>,
     program_id: Pubkey,
     amount: Amount,
@@ -126,25 +126,56 @@ fn get_cpi_instruction(
             AccountMeta::new_readonly(ctx.accounts.payer.key(), true),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
         ],
-        data: get_ix_data(amount, min_collateral),
+        data: liquidate_ix_data(amount, min_collateral),
     };
     Ok(instruction)
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-struct CpiArgs {
+pub struct LiquidateCpiArgs {
     amount: Amount,
     min_collateral: u64,
 }
 
-fn get_ix_data(amount: Amount, min_collateral: u64) -> Vec<u8> {
+pub fn liquidate_ix_data(amount: Amount, min_collateral: u64) -> Vec<u8> {
     let hash = get_function_hash("global", "liquidate");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
-    let args = CpiArgs {
+    let args = LiquidateCpiArgs {
         amount,
         min_collateral,
     };
     args.serialize(&mut buf).unwrap();
     buf
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `Liquidate`
+pub fn liquidate_cpi_ix(
+    account_infos: &[AccountInfo; 15],
+    program_id: Pubkey,
+    amount: Amount,
+    min_collateral: u64,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new(account_infos[3].key(), false),
+            AccountMeta::new_readonly(account_infos[4].key(), false),
+            AccountMeta::new(account_infos[5].key(), false),
+            AccountMeta::new(account_infos[6].key(), false),
+            AccountMeta::new(account_infos[7].key(), false),
+            AccountMeta::new(account_infos[8].key(), false),
+            AccountMeta::new(account_infos[9].key(), false),
+            AccountMeta::new(account_infos[10].key(), false),
+            AccountMeta::new(account_infos[11].key(), false),
+            AccountMeta::new_readonly(account_infos[12].key(), true),
+            AccountMeta::new_readonly(account_infos[13].key(), false),
+        ],
+        data: liquidate_ix_data(amount, min_collateral),
+    };
+    Ok(instruction)
 }

@@ -5,7 +5,11 @@
     it into the same CPI, as this example demonstrates.
 */
 
-use crate::{constants::*, utils::get_function_hash, Amount};
+use crate::{
+    constants::*,
+    instructions::{accrue_cpi_ix, deposit_tokens_cpi_ix},
+    Amount,
+};
 use anchor_lang::{
     prelude::*,
     solana_program::{instruction::Instruction, program::invoke},
@@ -72,18 +76,6 @@ pub struct AccrueAndDepositTokens<'info> {
 pub fn handler(ctx: Context<AccrueAndDepositTokens>, amount: Amount) -> Result<()> {
     // Invoke the accrue ix first
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction = Instruction {
-        program_id: psylend_program_id,
-        accounts: vec![
-            AccountMeta::new(ctx.accounts.market.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.market_authority.key(), false),
-            AccountMeta::new(ctx.accounts.reserve.key(), false),
-            AccountMeta::new(ctx.accounts.fee_note_vault.key(), false),
-            AccountMeta::new(ctx.accounts.deposit_note_mint.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
-        ],
-        data: get_function_hash("global", "accrue_interest").to_vec(),
-    };
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -93,11 +85,10 @@ pub fn handler(ctx: Context<AccrueAndDepositTokens>, amount: Amount) -> Result<(
         ctx.accounts.token_program.to_account_info(),
         ctx.accounts.psylend_program.to_account_info(),
     ];
-    invoke(&instruction, &account_infos)?;
+    let ix = accrue_cpi_ix(&account_infos, psylend_program_id)?;
+    invoke(&ix, &account_infos)?;
 
     // Invoke the deposit tokens ix after the accrue
-    let instruction: Instruction =
-        get_deposit_token_cpi_instruction(&ctx, psylend_program_id, amount)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -110,44 +101,9 @@ pub fn handler(ctx: Context<AccrueAndDepositTokens>, amount: Amount) -> Result<(
         ctx.accounts.token_program.to_account_info(),
         ctx.accounts.psylend_program.to_account_info(),
     ];
+    let instruction: Instruction =
+        deposit_tokens_cpi_ix(&account_infos, psylend_program_id, amount)?;
 
     invoke(&instruction, &account_infos)?;
     Ok(())
-}
-
-fn get_deposit_token_cpi_instruction(
-    ctx: &Context<AccrueAndDepositTokens>,
-    program_id: Pubkey,
-    amount: Amount,
-) -> Result<Instruction> {
-    let instruction = Instruction {
-        program_id,
-        accounts: vec![
-            AccountMeta::new_readonly(ctx.accounts.market.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.market_authority.key(), false),
-            AccountMeta::new(ctx.accounts.reserve.key(), false),
-            AccountMeta::new(ctx.accounts.vault.key(), false),
-            AccountMeta::new(ctx.accounts.deposit_note_mint.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.depositor.key(), true),
-            AccountMeta::new(ctx.accounts.deposit_account.key(), false),
-            AccountMeta::new(ctx.accounts.deposit_source.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
-        ],
-        data: get_deposit_token_ix_data(amount),
-    };
-    Ok(instruction)
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize)]
-struct CpiArgs {
-    amount: Amount,
-}
-
-fn get_deposit_token_ix_data(amount: Amount) -> Vec<u8> {
-    let hash = get_function_hash("global", "deposit_tokens");
-    let mut buf: Vec<u8> = vec![];
-    buf.extend_from_slice(&hash);
-    let args = CpiArgs { amount };
-    args.serialize(&mut buf).unwrap();
-    buf
 }

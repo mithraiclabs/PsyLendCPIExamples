@@ -42,7 +42,7 @@ pub struct CloseLoanAccount<'info> {
 
 pub fn handler(ctx: Context<CloseLoanAccount>) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id)?;
+    let instruction: Instruction = close_loan_cpi_instruction(&ctx, psylend_program_id)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -57,7 +57,10 @@ pub fn handler(ctx: Context<CloseLoanAccount>) -> Result<()> {
     Ok(())
 }
 
-fn get_cpi_instruction(ctx: &Context<CloseLoanAccount>, program_id: Pubkey) -> Result<Instruction> {
+pub fn close_loan_cpi_instruction(
+    ctx: &Context<CloseLoanAccount>,
+    program_id: Pubkey,
+) -> Result<Instruction> {
     let instruction = Instruction {
         program_id,
         accounts: vec![
@@ -67,6 +70,27 @@ fn get_cpi_instruction(ctx: &Context<CloseLoanAccount>, program_id: Pubkey) -> R
             AccountMeta::new(ctx.accounts.owner.key(), true),
             AccountMeta::new(ctx.accounts.loan_account.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
+        ],
+        data: get_function_hash("global", "close_loan_account").to_vec(),
+    };
+    Ok(instruction)
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `CloseLoanAccount`
+pub fn close_loan_cpi_ix(
+    account_infos: &[AccountInfo; 7],
+    program_id: Pubkey,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new(account_infos[3].key(), true),
+            AccountMeta::new(account_infos[4].key(), false),
+            AccountMeta::new_readonly(account_infos[5].key(), false),
         ],
         data: get_function_hash("global", "close_loan_account").to_vec(),
     };

@@ -56,7 +56,7 @@ pub struct CloseDepositAccount<'info> {
 
 pub fn handler(ctx: Context<CloseDepositAccount>) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id)?;
+    let instruction: Instruction = close_deposit_cpi_instruction(&ctx, psylend_program_id)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -74,7 +74,7 @@ pub fn handler(ctx: Context<CloseDepositAccount>) -> Result<()> {
     Ok(())
 }
 
-fn get_cpi_instruction(
+pub fn close_deposit_cpi_instruction(
     ctx: &Context<CloseDepositAccount>,
     program_id: Pubkey,
 ) -> Result<Instruction> {
@@ -90,6 +90,30 @@ fn get_cpi_instruction(
             AccountMeta::new(ctx.accounts.deposit_account.key(), false),
             AccountMeta::new(ctx.accounts.receiver_account.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
+        ],
+        data: get_function_hash("global", "close_deposit_account").to_vec(),
+    };
+    Ok(instruction)
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `CloseDepositAccount`
+pub fn close_deposit_cpi_ix(
+    account_infos: &[AccountInfo; 10],
+    program_id: Pubkey,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new(account_infos[3].key(), false),
+            AccountMeta::new(account_infos[4].key(), false),
+            AccountMeta::new(account_infos[5].key(), true),
+            AccountMeta::new(account_infos[6].key(), false),
+            AccountMeta::new(account_infos[7].key(), false),
+            AccountMeta::new_readonly(account_infos[8].key(), false),
         ],
         data: get_function_hash("global", "close_deposit_account").to_vec(),
     };
