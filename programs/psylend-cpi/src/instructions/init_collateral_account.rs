@@ -51,7 +51,7 @@ pub struct InitializeCollateralAccount<'info> {
 
 pub fn handler(ctx: Context<InitializeCollateralAccount>, bump: u8) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, bump)?;
+    let instruction: Instruction = init_collateral_cpi_instruction(&ctx, psylend_program_id, bump)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -71,7 +71,7 @@ pub fn handler(ctx: Context<InitializeCollateralAccount>, bump: u8) -> Result<()
     Ok(())
 }
 
-fn get_cpi_instruction(
+pub fn init_collateral_cpi_instruction(
     ctx: &Context<InitializeCollateralAccount>,
     program_id: Pubkey,
     bump: u8,
@@ -90,21 +90,47 @@ fn get_cpi_instruction(
             AccountMeta::new_readonly(ctx.accounts.system_program.key(), false),
             AccountMeta::new_readonly(ctx.accounts.rent.key(), false),
         ],
-        data: get_ix_data(bump),
+        data: init_collateral_ix_data(bump),
     };
     Ok(instruction)
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-struct CpiArgs {
+pub struct InitCollateralCpiArgs {
     bump: u8,
 }
 
-fn get_ix_data(bump: u8) -> Vec<u8> {
+pub fn init_collateral_ix_data(bump: u8) -> Vec<u8> {
     let hash = get_function_hash("global", "init_collateral_account");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
-    let args = CpiArgs { bump };
+    let args = InitCollateralCpiArgs { bump };
     args.serialize(&mut buf).unwrap();
     buf
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `InitializeCollateralAccount`
+pub fn init_collateral_cpi_ix(
+    account_infos: &[AccountInfo; 11],
+    program_id: Pubkey,
+    bump: u8,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new_readonly(account_infos[3].key(), false),
+            AccountMeta::new_readonly(account_infos[4].key(), false),
+            AccountMeta::new(account_infos[5].key(), true),
+            AccountMeta::new(account_infos[6].key(), false),
+            AccountMeta::new_readonly(account_infos[7].key(), false),
+            AccountMeta::new_readonly(account_infos[8].key(), false),
+            AccountMeta::new_readonly(account_infos[9].key(), false),
+        ],
+        data: init_collateral_ix_data(bump),
+    };
+    Ok(instruction)
 }

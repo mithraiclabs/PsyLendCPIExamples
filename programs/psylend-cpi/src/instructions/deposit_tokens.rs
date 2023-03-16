@@ -37,10 +37,10 @@ pub struct DepositTokens<'info> {
     pub depositor: Signer<'info>,
 
     /// The token account that will store the deposit notes
-    /// 
+    ///
     /// Note: The only difference between this ix and `deposit` is that this ix does not perform a
     /// check on the PDA here. This allows any token account to claim the deposit notes.
-    /// 
+    ///
     /// CHECK: Checked by PsyLend (mint only)
     #[account(mut)]
     pub deposit_account: UncheckedAccount<'info>,
@@ -59,7 +59,8 @@ pub struct DepositTokens<'info> {
 
 pub fn handler(ctx: Context<DepositTokens>, amount: Amount) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, amount)?;
+    let instruction: Instruction =
+        deposit_tokens_cpi_instruction(&ctx, psylend_program_id, amount)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -77,7 +78,7 @@ pub fn handler(ctx: Context<DepositTokens>, amount: Amount) -> Result<()> {
     Ok(())
 }
 
-fn get_cpi_instruction(
+pub fn deposit_tokens_cpi_instruction(
     ctx: &Context<DepositTokens>,
     program_id: Pubkey,
     amount: Amount,
@@ -95,21 +96,46 @@ fn get_cpi_instruction(
             AccountMeta::new(ctx.accounts.deposit_source.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
         ],
-        data: get_ix_data(amount),
+        data: deposit_tokens_ix_data(amount),
     };
     Ok(instruction)
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-struct CpiArgs {
-    amount: Amount
+pub struct DepositTokensCpiArgs {
+    amount: Amount,
 }
 
-fn get_ix_data(amount: Amount) -> Vec<u8> {
+pub fn deposit_tokens_ix_data(amount: Amount) -> Vec<u8> {
     let hash = get_function_hash("global", "deposit_tokens");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
-    let args = CpiArgs { amount };
+    let args = DepositTokensCpiArgs { amount };
     args.serialize(&mut buf).unwrap();
     buf
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `DepositTokens`
+pub fn deposit_tokens_cpi_ix(
+    account_infos: &[AccountInfo; 10],
+    program_id: Pubkey,
+    amount: Amount,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new(account_infos[3].key(), false),
+            AccountMeta::new(account_infos[4].key(), false),
+            AccountMeta::new_readonly(account_infos[5].key(), true),
+            AccountMeta::new(account_infos[6].key(), false),
+            AccountMeta::new(account_infos[7].key(), false),
+            AccountMeta::new_readonly(account_infos[8].key(), false),
+        ],
+        data: deposit_tokens_ix_data(amount),
+    };
+    Ok(instruction)
 }

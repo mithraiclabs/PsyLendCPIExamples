@@ -58,7 +58,8 @@ pub struct WithdrawTokens<'info> {
 
 pub fn handler(ctx: Context<WithdrawTokens>, amount: Amount) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = get_cpi_instruction(&ctx, psylend_program_id, amount)?;
+    let instruction: Instruction =
+        withdraw_tokens_cpi_instruction(&ctx, psylend_program_id, amount)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -76,7 +77,7 @@ pub fn handler(ctx: Context<WithdrawTokens>, amount: Amount) -> Result<()> {
     Ok(())
 }
 
-fn get_cpi_instruction(
+pub fn withdraw_tokens_cpi_instruction(
     ctx: &Context<WithdrawTokens>,
     program_id: Pubkey,
     amount: Amount,
@@ -94,21 +95,46 @@ fn get_cpi_instruction(
             AccountMeta::new(ctx.accounts.withdraw_account.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
         ],
-        data: get_ix_data(amount),
+        data: withdraw_tokens_ix_data(amount),
     };
     Ok(instruction)
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize)]
-struct CpiArgs {
+pub struct WithdrawTokensCpiArgs {
     amount: Amount,
 }
 
-fn get_ix_data(amount: Amount) -> Vec<u8> {
+pub fn withdraw_tokens_ix_data(amount: Amount) -> Vec<u8> {
     let hash = get_function_hash("global", "withdraw_tokens");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
-    let args = CpiArgs { amount };
+    let args = WithdrawTokensCpiArgs { amount };
     args.serialize(&mut buf).unwrap();
     buf
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `WithdrawTokens`
+pub fn withdraw_tokens_cpi_ix(
+    account_infos: &[AccountInfo; 10],
+    program_id: Pubkey,
+    amount: Amount,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new(account_infos[3].key(), false),
+            AccountMeta::new(account_infos[4].key(), false),
+            AccountMeta::new_readonly(account_infos[5].key(), true),
+            AccountMeta::new(account_infos[6].key(), false),
+            AccountMeta::new(account_infos[7].key(), false),
+            AccountMeta::new_readonly(account_infos[8].key(), false),
+        ],
+        data: withdraw_tokens_ix_data(amount),
+    };
+    Ok(instruction)
 }

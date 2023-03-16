@@ -55,7 +55,7 @@ pub struct Deposit<'info> {
 
 pub fn handler(ctx: Context<Deposit>, bump: u8, amount: Amount) -> Result<()> {
     let psylend_program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction: Instruction = deposit_instruction(&ctx, psylend_program_id, bump, amount)?;
+    let instruction: Instruction = deposit_cpi_instruction(&ctx, psylend_program_id, bump, amount)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.market_authority.to_account_info(),
@@ -73,7 +73,7 @@ pub fn handler(ctx: Context<Deposit>, bump: u8, amount: Amount) -> Result<()> {
     Ok(())
 }
 
-pub fn deposit_instruction(
+pub fn deposit_cpi_instruction(
     ctx: &Context<Deposit>,
     program_id: Pubkey,
     bump: u8,
@@ -92,7 +92,7 @@ pub fn deposit_instruction(
             AccountMeta::new(ctx.accounts.deposit_source.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
         ],
-        data: get_deposit_data(bump, amount),
+        data: deposit_ix_data(bump, amount),
     };
     Ok(instruction)
 }
@@ -100,14 +100,40 @@ pub fn deposit_instruction(
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct DepositCpiArgs {
     bump: u8,
-    amount: Amount
+    amount: Amount,
 }
 
-pub fn get_deposit_data(bump: u8, amount: Amount) -> Vec<u8> {
+pub fn deposit_ix_data(bump: u8, amount: Amount) -> Vec<u8> {
     let hash = get_function_hash("global", "deposit");
     let mut buf: Vec<u8> = vec![];
     buf.extend_from_slice(&hash);
     let args = DepositCpiArgs { bump, amount };
     args.serialize(&mut buf).unwrap();
     buf
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `Deposit`
+pub fn deposit_cpi_ix(
+    account_infos: &[AccountInfo; 10],
+    program_id: Pubkey,
+    amount: Amount,
+    bump: u8,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new_readonly(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new(account_infos[2].key(), false),
+            AccountMeta::new(account_infos[3].key(), false),
+            AccountMeta::new(account_infos[4].key(), false),
+            AccountMeta::new_readonly(account_infos[5].key(), true),
+            AccountMeta::new(account_infos[6].key(), false),
+            AccountMeta::new(account_infos[7].key(), false),
+            AccountMeta::new_readonly(account_infos[8].key(), false),
+        ],
+        data: deposit_ix_data(bump, amount),
+    };
+    Ok(instruction)
 }

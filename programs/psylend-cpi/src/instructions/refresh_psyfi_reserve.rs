@@ -35,16 +35,7 @@ pub struct RefreshPsyFiReserve<'info> {
 
 pub fn handler(ctx: Context<RefreshPsyFiReserve>) -> Result<()> {
     let program_id: Pubkey = Pubkey::from_str(PSYLEND_PROGRAM_KEY).unwrap();
-    let instruction = Instruction {
-        program_id,
-        accounts: vec![
-            AccountMeta::new(ctx.accounts.market.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.reserve.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.psyfi_vault_account.key(), false),
-            AccountMeta::new_readonly(ctx.accounts.pyth_oracle_price.key(), false),
-        ],
-        data: get_function_hash("global", "refresh_psyfi_reserve").to_vec(),
-    };
+    let instruction = refresh_psyfi_cpi_instruction(&ctx, program_id)?;
     let account_infos = [
         ctx.accounts.market.to_account_info(),
         ctx.accounts.reserve.to_account_info(),
@@ -55,4 +46,40 @@ pub fn handler(ctx: Context<RefreshPsyFiReserve>) -> Result<()> {
 
     invoke(&instruction, &account_infos)?;
     Ok(())
+}
+
+pub fn refresh_psyfi_cpi_instruction(
+    ctx: &Context<RefreshPsyFiReserve>,
+    program_id: Pubkey,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(ctx.accounts.market.key(), false),
+            AccountMeta::new_readonly(ctx.accounts.reserve.key(), false),
+            AccountMeta::new_readonly(ctx.accounts.psyfi_vault_account.key(), false),
+            AccountMeta::new_readonly(ctx.accounts.pyth_oracle_price.key(), false),
+        ],
+        data: get_function_hash("global", "refresh_psyfi_reserve").to_vec(),
+    };
+    Ok(instruction)
+}
+
+/// Build a CPI instruction. Accounts must be in the same order as Context
+/// `RefreshPsyFiReserve`
+pub fn refresh_psyfi_cpi_ix(
+    account_infos: &[AccountInfo; 5],
+    program_id: Pubkey,
+) -> Result<Instruction> {
+    let instruction = Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(account_infos[0].key(), false),
+            AccountMeta::new_readonly(account_infos[1].key(), false),
+            AccountMeta::new_readonly(account_infos[2].key(), false),
+            AccountMeta::new_readonly(account_infos[3].key(), false),
+        ],
+        data: get_function_hash("global", "refresh_psyfi_reserve").to_vec(),
+    };
+    Ok(instruction)
 }
