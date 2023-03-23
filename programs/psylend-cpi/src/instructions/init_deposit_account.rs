@@ -118,7 +118,7 @@ pub fn init_deposit_ix_data(bump: u8) -> Vec<u8> {
 /// Build a CPI instruction. Accounts must be in the same order as Context
 /// `InitializeDepositAccount`
 pub fn init_deposit_cpi_ix(
-    account_infos: &[AccountInfo; 10],
+    account_infos: &[AccountInfo; 11],
     program_id: Pubkey,
     bump: u8,
 ) -> Result<Instruction> {
@@ -129,11 +129,12 @@ pub fn init_deposit_cpi_ix(
             AccountMeta::new_readonly(account_infos[1].key(), false),
             AccountMeta::new_readonly(account_infos[2].key(), false),
             AccountMeta::new_readonly(account_infos[3].key(), false),
-            AccountMeta::new(account_infos[4].key(), true),
-            AccountMeta::new(account_infos[5].key(), false),
-            AccountMeta::new_readonly(account_infos[6].key(), false),
+            AccountMeta::new_readonly(account_infos[4].key(), false),
+            AccountMeta::new(account_infos[5].key(), true),
+            AccountMeta::new(account_infos[6].key(), false),
             AccountMeta::new_readonly(account_infos[7].key(), false),
             AccountMeta::new_readonly(account_infos[8].key(), false),
+            AccountMeta::new_readonly(account_infos[9].key(), false),
         ],
         data: init_deposit_ix_data(bump),
     };

@@ -9,6 +9,14 @@
   dependencies:
     regenerator-runtime "^0.13.11"
 
+"@coral-xyz/borsh@^0.26.0":
+  version "0.26.0"
+  resolved "https://registry.yarnpkg.com/@coral-xyz/borsh/-/borsh-0.26.0.tgz#d054f64536d824634969e74138f9f7c52bbbc0d5"
+  integrity sha512-uCZ0xus0CszQPHYfWAqKS5swS1UxvePu83oOF+TWpUkedsNlg6p2p4azxZNSSqwXb9uXMFgxhuMBX9r3Xoi0vQ==
+  dependencies:
+    bn.js "^5.1.2"
+    buffer-layout "^1.2.0"
+
 "@hapi/hoek@^9.0.0":
   version "9.3.0"
   resolved "https://registry.yarnpkg.com/@hapi/hoek/-/hoek-9.3.0.tgz#8368869dcb735be2e7f5cb7647de78e167a251fb"
@@ -67,18 +75,27 @@
     bn.js "^5.2.0"
     debug "^4.3.3"
 
-"@mithraic-labs/psylend-utils@^0.0.3-rc32":
-  version "0.0.3-rc32"
-  resolved "https://registry.yarnpkg.com/@mithraic-labs/psylend-utils/-/psylend-utils-0.0.3-rc32.tgz#0f11b3a42f00d7fe7f0579b757ab4276ce74807c"
-  integrity sha512-bZnJmzNKQp5LnBWw5D/L/DBSe9rb4WfCfD3Kux3gX+9im3AuElEFguaALQq00Ese7v+bOm94a7ogGoFeunKQuA==
+"@mithraic-labs/psylend-utils@^0.0.3-rc40":
+  version "0.0.3-rc40"
+  resolved "https://registry.yarnpkg.com/@mithraic-labs/psylend-utils/-/psylend-utils-0.0.3-rc40.tgz#59573db6e7ed4f5649935254bad0ae309ce760c8"
+  integrity sha512-h7+bbmhi63hHARvPQdHGDbVq2q0sFCxZeIWlOetcoqqSMGNqDYV8IKIrIX3bkBoCiTwYsjU3bO+HAMPr+4cxbA==
   dependencies:
-    "@project-serum/anchor" "0.25.0"
+    "@project-serum/anchor" "0.26.0"
     "@project-serum/serum" "^0.13.65"
     "@pythnetwork/client" "2.7.3"
     "@solana/web3.js" "^1.30.2"
     chai "^4.3.7"
-    psyfi-euros-test "0.0.2-rc.5"
+    psyfi-euros-test "0.0.3-rc13"
     spl2 "npm:@solana/spl-token@^0.2.0"
+
+"@mithraic-labs/tokenized-euros@^0.3.0-rc2":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@mithraic-labs/tokenized-euros/-/tokenized-euros-0.3.0.tgz#0525f4996296eb52d640e4b6b84113fe9c110530"
+  integrity sha512-TsJ1yEWsvMMXGhZ71XZcbUBDEjoI4+UT5xaKDuXzC+OterL/TkQX+V3herQLwm7SPvigUNf2uNQqASQZvba4OQ==
+  dependencies:
+    "@project-serum/anchor" "0.25.0"
+    "@project-serum/serum" "^0.13.62"
+    "@solana/spl-token" "^0.2.0"
 
 "@noble/ed25519@^1.7.0":
   version "1.7.1"
@@ -94,27 +111,6 @@
   version "1.7.1"
   resolved "https://registry.yarnpkg.com/@noble/secp256k1/-/secp256k1-1.7.1.tgz#b251c70f824ce3ca7f8dc3df08d58f005cc0507c"
   integrity sha512-hOUk6AyBFmqVrv7k5WAw/LpszxVbj9gGN4JRkIX52fdFAj1UA61KXmZDvqVEm+pOyec3+fIeZB02LYa/pWOArw==
-
-"@project-serum/anchor@0.23.0", "@project-serum/anchor@^0.23.0":
-  version "0.23.0"
-  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.23.0.tgz#2b2eb6b51601b073e8db26663aa2d6c2f2841771"
-  integrity sha512-LV2/ifZOJVFTZ4GbEloXln3iVfCvO1YM8i7BBCrUm4tehP7irMx4nr4/IabHWOzrQcQElsxSP/lb1tBp+2ff8A==
-  dependencies:
-    "@project-serum/borsh" "^0.2.5"
-    "@solana/web3.js" "^1.36.0"
-    base64-js "^1.5.1"
-    bn.js "^5.1.2"
-    bs58 "^4.0.1"
-    buffer-layout "^1.2.2"
-    camelcase "^5.3.1"
-    cross-fetch "^3.1.5"
-    crypto-hash "^1.3.0"
-    eventemitter3 "^4.0.7"
-    find "^0.3.0"
-    js-sha256 "^0.9.0"
-    pako "^2.0.3"
-    snake-case "^3.0.4"
-    toml "^3.0.0"
 
 "@project-serum/anchor@0.25.0":
   version "0.25.0"
@@ -137,6 +133,27 @@
     superstruct "^0.15.4"
     toml "^3.0.0"
 
+"@project-serum/anchor@0.26.0":
+  version "0.26.0"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.26.0.tgz#99e15a3923a5d10514f8185b2d3909e5699d60d5"
+  integrity sha512-Nq+COIjE1135T7qfnOHEn7E0q39bQTgXLFk837/rgFe6Hkew9WML7eHsS+lSYD2p3OJaTiUOHTAq1lHy36oIqQ==
+  dependencies:
+    "@coral-xyz/borsh" "^0.26.0"
+    "@solana/web3.js" "^1.68.0"
+    base64-js "^1.5.1"
+    bn.js "^5.1.2"
+    bs58 "^4.0.1"
+    buffer-layout "^1.2.2"
+    camelcase "^6.3.0"
+    cross-fetch "^3.1.5"
+    crypto-hash "^1.3.0"
+    eventemitter3 "^4.0.7"
+    js-sha256 "^0.9.0"
+    pako "^2.0.3"
+    snake-case "^3.0.4"
+    superstruct "^0.15.4"
+    toml "^3.0.0"
+
 "@project-serum/anchor@^0.11.1":
   version "0.11.1"
   resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.11.1.tgz#155bff2c70652eafdcfd5559c81a83bb19cec9ff"
@@ -149,6 +166,27 @@
     bs58 "^4.0.1"
     buffer-layout "^1.2.0"
     camelcase "^5.3.1"
+    crypto-hash "^1.3.0"
+    eventemitter3 "^4.0.7"
+    find "^0.3.0"
+    js-sha256 "^0.9.0"
+    pako "^2.0.3"
+    snake-case "^3.0.4"
+    toml "^3.0.0"
+
+"@project-serum/anchor@^0.23.0":
+  version "0.23.0"
+  resolved "https://registry.yarnpkg.com/@project-serum/anchor/-/anchor-0.23.0.tgz#2b2eb6b51601b073e8db26663aa2d6c2f2841771"
+  integrity sha512-LV2/ifZOJVFTZ4GbEloXln3iVfCvO1YM8i7BBCrUm4tehP7irMx4nr4/IabHWOzrQcQElsxSP/lb1tBp+2ff8A==
+  dependencies:
+    "@project-serum/borsh" "^0.2.5"
+    "@solana/web3.js" "^1.36.0"
+    base64-js "^1.5.1"
+    bn.js "^5.1.2"
+    bs58 "^4.0.1"
+    buffer-layout "^1.2.2"
+    camelcase "^5.3.1"
+    cross-fetch "^3.1.5"
     crypto-hash "^1.3.0"
     eventemitter3 "^4.0.7"
     find "^0.3.0"
@@ -194,7 +232,7 @@
     bn.js "^5.1.2"
     superstruct "0.8.3"
 
-"@project-serum/serum@^0.13.21", "@project-serum/serum@^0.13.61", "@project-serum/serum@^0.13.65":
+"@project-serum/serum@^0.13.21", "@project-serum/serum@^0.13.61", "@project-serum/serum@^0.13.62", "@project-serum/serum@^0.13.65":
   version "0.13.65"
   resolved "https://registry.yarnpkg.com/@project-serum/serum/-/serum-0.13.65.tgz#6d3cf07912f13985765237f053cca716fe84b0b0"
   integrity sha512-BHRqsTqPSfFB5p+MgI2pjvMBAQtO8ibTK2fYY96boIFkCI3TTwXDt2gUmspeChKO2pqHr5aKevmexzAcXxrSRA==
@@ -246,7 +284,7 @@
   dependencies:
     buffer "~6.0.3"
 
-"@solana/spl-token@0.1.8", "@solana/spl-token@^0.1.6", "@solana/spl-token@^0.1.8":
+"@solana/spl-token@^0.1.6", "@solana/spl-token@^0.1.8":
   version "0.1.8"
   resolved "https://registry.yarnpkg.com/@solana/spl-token/-/spl-token-0.1.8.tgz#f06e746341ef8d04165e21fc7f555492a2a0faa6"
   integrity sha512-LZmYCKcPQDtJgecvWOgT/cnoIQPWjdH+QVyzPcFvyDUiT0DiRjZaam4aqNUyvchLFhzgunv3d9xOoyE34ofdoQ==
@@ -320,6 +358,28 @@
     jayson "^3.4.4"
     node-fetch "2"
     rpc-websockets "^7.5.0"
+    superstruct "^0.14.2"
+
+"@solana/web3.js@^1.68.0":
+  version "1.74.0"
+  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.74.0.tgz#dbcbeabb830dd7cbbcf5e31404ca79c9785cbf2d"
+  integrity sha512-RKZyPqizPCxmpMGfpu4fuplNZEWCrhRBjjVstv5QnAJvgln1jgOfgui+rjl1ExnqDnWKg9uaZ5jtGROH/cwabg==
+  dependencies:
+    "@babel/runtime" "^7.12.5"
+    "@noble/ed25519" "^1.7.0"
+    "@noble/hashes" "^1.1.2"
+    "@noble/secp256k1" "^1.6.3"
+    "@solana/buffer-layout" "^4.0.0"
+    agentkeepalive "^4.2.1"
+    bigint-buffer "^1.1.5"
+    bn.js "^5.0.0"
+    borsh "^0.7.0"
+    bs58 "^4.0.1"
+    buffer "6.0.1"
+    fast-stable-stringify "^1.0.0"
+    jayson "^3.4.4"
+    node-fetch "^2.6.7"
+    rpc-websockets "^7.5.1"
     superstruct "^0.14.2"
 
 "@types/bn.js@^5.1.0":
@@ -592,7 +652,7 @@ camelcase@^5.3.1:
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-5.3.1.tgz#e3c9b31569e106811df242f715725a1f4c494320"
   integrity sha512-L28STB170nwWS63UjtlEOE3dldQApaJXZkOI1uMFfzf3rRuPegHaHesyee+YxQ+W6SvRDQV6UrdOdRiR153wJg==
 
-camelcase@^6.0.0:
+camelcase@^6.0.0, camelcase@^6.3.0:
   version "6.3.0"
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-6.3.0.tgz#5685b95eb209ac9c0c177467778c9c84df58ba9a"
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
@@ -1234,7 +1294,7 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-node-fetch@2:
+node-fetch@2, node-fetch@^2.6.7:
   version "2.6.9"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.6.9.tgz#7c7f744b5cc6eb5fd404e0c7a9fec630a55657e6"
   integrity sha512-DJm/CJkZkRjKKj4Zi4BsKVZh3ValV5IR5s7LVZnW+6YMh0W1BfNA8XSs6DLMGYlId5F3KnA70uu2qepcR08Qqg==
@@ -1342,16 +1402,17 @@ ps-tree@1.2.0:
   dependencies:
     event-stream "=3.3.4"
 
-psyfi-euros-test@0.0.2-rc.5:
-  version "0.0.2-rc.5"
-  resolved "https://registry.yarnpkg.com/psyfi-euros-test/-/psyfi-euros-test-0.0.2-rc.5.tgz#7b0db21ecbe7bac490de764f022feb01a9b501d9"
-  integrity sha512-bTeM4wrS9x6+9Z69uN9wWELTc7MyM3KpNdntp9T3uUkQwnN9Pygwjd/a+Mf/x7PbmAHKMabY7tLbSVxpifVt4g==
+psyfi-euros-test@0.0.3-rc13:
+  version "0.0.3-rc13"
+  resolved "https://registry.yarnpkg.com/psyfi-euros-test/-/psyfi-euros-test-0.0.3-rc13.tgz#d8598d37f48e91aa6540aac28941047db9a44603"
+  integrity sha512-hhCQcUaaEGfazXPxSq5zbJSfuc2TKsq5dt0NieuQDYMA5jEkhBMV0VtbeTw5+DLxt1oZ2E5u3i+lzWnwIrHKBA==
   dependencies:
     "@metaplex-foundation/mpl-token-metadata" "2.2.4"
-    "@project-serum/anchor" "0.23.0"
+    "@mithraic-labs/tokenized-euros" "^0.3.0-rc2"
+    "@project-serum/anchor" "0.25.0"
     "@project-serum/common" "^0.0.1-beta.3"
-    "@project-serum/serum" "^0.13.61"
-    "@solana/spl-token" "0.1.8"
+    "@project-serum/serum" "^0.13.62"
+    "@solana/spl-token" "^0.2.0"
     "@solana/web3.js" "^1.35.1"
     psystake-test "0.0.1-rc.8"
 
@@ -1394,6 +1455,19 @@ rpc-websockets@^7.5.0:
   version "7.5.0"
   resolved "https://registry.yarnpkg.com/rpc-websockets/-/rpc-websockets-7.5.0.tgz#bbeb87572e66703ff151e50af1658f98098e2748"
   integrity sha512-9tIRi1uZGy7YmDjErf1Ax3wtqdSSLIlnmL5OtOzgd5eqPKbsPpwDP5whUDO2LQay3Xp0CcHlcNSGzacNRluBaQ==
+  dependencies:
+    "@babel/runtime" "^7.17.2"
+    eventemitter3 "^4.0.7"
+    uuid "^8.3.2"
+    ws "^8.5.0"
+  optionalDependencies:
+    bufferutil "^4.0.1"
+    utf-8-validate "^5.0.2"
+
+rpc-websockets@^7.5.1:
+  version "7.5.1"
+  resolved "https://registry.yarnpkg.com/rpc-websockets/-/rpc-websockets-7.5.1.tgz#e0a05d525a97e7efc31a0617f093a13a2e10c401"
+  integrity sha512-kGFkeTsmd37pHPMaHIgN1LVKXMi0JD782v4Ds9ZKtLlwdTKjn+CxM9A9/gLT2LaOuEcEFGL98h1QWQtlOIdW0w==
   dependencies:
     "@babel/runtime" "^7.17.2"
     eventemitter3 "^4.0.7"
