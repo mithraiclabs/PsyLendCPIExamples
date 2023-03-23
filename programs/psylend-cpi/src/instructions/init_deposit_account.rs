@@ -26,10 +26,19 @@ pub struct InitializeDepositAccount<'info> {
     /// CHECK: Checked by PsyLend
     pub deposit_note_mint: UncheckedAccount<'info>,
 
-    /// The user/wallet that owns the deposit account
+    /// The user/wallet that will own the deposit account
+    /// 
     /// Note: the market authority is the owner/authority in the technical sense.
+    /// 
+    /// CHECK: opening a deposit acc for a depositor does not require their permission
+    pub depositor: UncheckedAccount<'info>,
+
+    /// The user/authority that pays the fees to open the deposit acc
+    ///
+    /// Typically the same as the depositor, unless opening an account
+    /// on behalf of another user
     #[account(mut)]
-    pub depositor: Signer<'info>,
+    pub payer: Signer<'info>,
 
     /// The account that will store the deposit notes
     /// A pda derived from "deposits", the reserve key, and the depositor key.
@@ -55,6 +64,7 @@ pub fn handler(ctx: Context<InitializeDepositAccount>, bump: u8) -> Result<()> {
         ctx.accounts.reserve.to_account_info(),
         ctx.accounts.deposit_note_mint.to_account_info(),
         ctx.accounts.depositor.to_account_info(),
+        ctx.accounts.payer.to_account_info(),
         ctx.accounts.deposit_account.to_account_info(),
         ctx.accounts.token_program.to_account_info(),
         ctx.accounts.system_program.to_account_info(),
@@ -79,7 +89,8 @@ pub fn init_deposit_cpi_instruction(
             AccountMeta::new_readonly(ctx.accounts.market_authority.key(), false),
             AccountMeta::new_readonly(ctx.accounts.reserve.key(), false),
             AccountMeta::new_readonly(ctx.accounts.deposit_note_mint.key(), false),
-            AccountMeta::new(ctx.accounts.depositor.key(), true),
+            AccountMeta::new_readonly(ctx.accounts.depositor.key(), false),
+            AccountMeta::new(ctx.accounts.payer.key(), true),
             AccountMeta::new(ctx.accounts.deposit_account.key(), false),
             AccountMeta::new_readonly(ctx.accounts.token_program.key(), false),
             AccountMeta::new_readonly(ctx.accounts.system_program.key(), false),
