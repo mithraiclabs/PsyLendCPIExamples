@@ -198,6 +198,8 @@ impl Reserve {
 
     // The following values are always safe to extract from stale state, because any
     // withdraw/deposit/borrow requires an accrue already.
+    /// Total deposited tokens that are not currently borrowed, in token. Safe to extract from stale
+    /// state, because any withdraw/deposit/borrow requires an accrue.
     pub fn total_deposits(&self) -> u64 {
         self.state_stale().total_deposits
     }
