@@ -41,7 +41,7 @@ pub fn handler(ctx: Context<GetReserveBalance>) -> Result<()> {
     // E.g. 1 token is stored as 1 * 10 ^ decimals * 10 ^ 15
     let outstanding_debt = reserve.unwrap_outstanding_debt_unsafe();
     // Use to get native decimals, or `as_u64_rounded` to round to the nearest 1.
-    let outstanding_debt_native = outstanding_debt.as_u64(reserve.exponent);
+    let _outstanding_debt_native = outstanding_debt.as_u64(reserve.exponent);
     // For the most up-to-date information, run accrue_interest on the reserve first, then use:
     // let outstanding_debt = reserve.unwrap_outstanding_debt();
 
@@ -66,19 +66,19 @@ pub fn handler(ctx: Context<GetReserveBalance>) -> Result<()> {
 
     // Exchange rates are stored on the market's cache for that reserve, allowing conversion of
     // notes into the asset. Note that due to looping deposits, the value of deposit notes may be
-    // much higher than the actual value of deposited tokens. 
-    
-    // E.g. 100 tokens deposited, but deposit
-    // notes may have a value of 300 tokens and loan notes may be worth 250 tokens if:
+    // much higher than the actual value of deposited tokens.
+
+    // E.g. 100 tokens deposited, but deposit notes may have a value of 300 tokens and loan notes
+    // may be worth 250 tokens if:
     /*
-        User deposits 100
-        Borrows 100
-        Deposits 100
-        Borrows 100
-        Deposits 100
-        Borrows 50
-        Total deposited: 350, Total borrowed: 250, Actual tvl: 50
-     */
+       User deposits 100
+       Borrows 100
+       Deposits 100
+       Borrows 100
+       Deposits 100
+       Borrows 50
+       Total deposited: 350, Total borrowed: 250, Actual tvl: 50
+    */
     let reserve_info: &ReserveInfo = market_reserves.get(reserve.index);
     let _deposit_note_exchange_rate = reserve_info
         .cached_note
