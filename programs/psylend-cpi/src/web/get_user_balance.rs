@@ -1,5 +1,5 @@
-// A basic example of reading a reserve's total balance (amount supplied and borrowed, in native
-// decimals of the asset)
+// A basic example of reading a a user's balances (amount supplied and borrowed, in native decimals
+// of the asset)
 
 // To get the most up-to-date information, always send a refresh and accrue ix (or CPI) just prior
 // to fetching this information. In this example, we don't care if the cache is stale. We crank this
@@ -13,12 +13,11 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct GetUserBalance<'info> {
-    /// The market that the reserve is under, you probably fetched this with Tokio
+    /// The market that the reserve is under
     /// CHECK: no checks
     #[account()]
     pub market: AccountInfo<'info>,
-    /// A reserve where we want to see the current supply interest rate, you probably fetched this
-    /// with Tokio.
+    /// A reserve where we want to see a user's balance
     /// CHECK: no checks
     #[account()]
     pub reserve: AccountInfo<'info>,

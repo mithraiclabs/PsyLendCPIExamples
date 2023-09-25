@@ -13,11 +13,11 @@ use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct GetReserveBalance<'info> {
-    /// The market that the reserve is under, you probably fetched this with Tokio
+    /// The market that the reserve is under
     /// CHECK: no checks
     #[account()]
     pub market: AccountInfo<'info>,
-    /// A reserve where we want to see the current balances, you probably fetched this with Tokio.
+    /// A reserve where we want to see the current balances
     /// CHECK: no checks
     #[account()]
     pub reserve: AccountInfo<'info>,
