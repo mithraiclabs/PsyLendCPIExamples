@@ -10,6 +10,7 @@ pub mod state;
 pub mod utils;
 use combinations::*;
 use instructions::*;
+use web::*;
 //use state::*;
 
 #[program]
@@ -126,6 +127,14 @@ pub mod psylend_cpi {
 
     pub fn get_current_interest(ctx: Context<GetCurrentInterest>) -> Result<()> {
         combinations::get_current_interest::handler(ctx)
+    }
+
+    pub fn get_reserve_balance(ctx: Context<GetReserveBalance>) -> Result<()> {
+        web::get_reserve_balance::handler(ctx)
+    }
+
+    pub fn get_user_balance(ctx: Context<GetUserBalance>) -> Result<()> {
+        web::get_user_balance::handler(ctx)
     }
     
 

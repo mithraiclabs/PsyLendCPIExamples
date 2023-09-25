@@ -17,8 +17,7 @@ pub struct GetReserveBalance<'info> {
     /// CHECK: no checks
     #[account()]
     pub market: AccountInfo<'info>,
-    /// A reserve where we want to see the current supply interest rate, you probably fetched this
-    /// with Tokio.
+    /// A reserve where we want to see the current balances, you probably fetched this with Tokio.
     /// CHECK: no checks
     #[account()]
     pub reserve: AccountInfo<'info>,
@@ -42,6 +41,8 @@ pub fn handler(ctx: Context<GetReserveBalance>) -> Result<()> {
     let outstanding_debt = reserve.unwrap_outstanding_debt_unsafe();
     // Use to get native decimals, or `as_u64_rounded` to round to the nearest 1.
     let _outstanding_debt_native = outstanding_debt.as_u64(reserve.exponent);
+    // Note: You also want .as_u64(0); instead to keep the decimals
+
     // For the most up-to-date information, run accrue_interest on the reserve first, then use:
     // let outstanding_debt = reserve.unwrap_outstanding_debt();
 

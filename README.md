@@ -35,4 +35,8 @@ to use the CPI library to look for vulnerabilities in PsyLend.
 ## Running Tests
 Tests run on devnet using pre-made PsyLend markets and reserves. Use `anchor test -- --features
 devnet`. Your wallet must have some SOL and USDC for all tests to pass, you can get these at <a
-href="https://trade.psyoptions.io/#/faucets">our faucet</a>
+href="https://trade.psyoptions.io/#/faucets">our faucet</a>. You may also want to skip deployment
+with `anchor test --skip-deploy -- --features devnet`.
+
+This Program was originally compiled with Solana tools 1.14.20 and Anchor 0.26.0, you may experience
+compatability issues with 1.16.x or later and Anchor 0.28.0 or later.

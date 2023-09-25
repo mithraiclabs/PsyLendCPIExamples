@@ -109,6 +109,12 @@ impl MarketReserves {
     pub fn get(&self, index: ReserveIndex) -> &ReserveInfo {
         &self.reserve_info[index as usize]
     }
+    
+    pub fn iter(&self) -> impl Iterator<Item = &ReserveInfo> {
+        self.reserve_info
+            .iter()
+            .take_while(|r| r.reserve != Pubkey::default())
+    }
 }
 
 /// Stores cached data for a reserve

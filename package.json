@@ -4,7 +4,7 @@
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
     },
     "dependencies": {
-        "@mithraic-labs/psylend-utils": "^0.0.3-rc40",
+        "@mithraic-labs/psylend-utils": "^0.0.3-rc41",
         "@project-serum/anchor": "^0.24.2",
         "@solana/spl-token": "^0.3.0",
         "@solana/web3.js": "^1.73.0"

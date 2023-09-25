@@ -457,7 +457,7 @@ describe("PsyLend CPI examples", () => {
     }
   });
 
-  it("Deposits .5 (USDC) as collateral by CPI", async () => {
+  it("Deposits 5 (USDC) as collateral by CPI", async () => {
     let depositAccountBefore = await getAccount(con, usdcDepositAccountKey);
     let collateralAccountBefore = await getAccount(
       con,
@@ -465,7 +465,7 @@ describe("PsyLend CPI examples", () => {
     );
 
     let amount = types.Amount.tokens(
-      new BN(1 * 10 ** Math.abs(usdcReserve.exponent))
+      new BN(5 * 10 ** Math.abs(usdcReserve.exponent))
     );
 
     const ix = await program.methods
@@ -653,6 +653,43 @@ describe("PsyLend CPI examples", () => {
       Number(wsolAccountAfter.amount),
       Number(wsolAccountBefore.amount)
     );
+  });
+
+  it("Read the current reserve balance", async () => {
+    const ix = await program.methods
+      .getReserveBalance()
+      .accounts({
+        market: marketKey,
+        reserve: usdcReserveKey,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+    // Check the program log to see the message.
+  });
+
+  it("Read the user's usdc balance", async () => {
+    const ix = await program.methods
+      .getUserBalance()
+      .accounts({
+        market: marketKey,
+        reserve: usdcReserveKey,
+        userObligation: obligationKey,
+      })
+      .instruction();
+
+    try {
+      await provider.sendAndConfirm(new Transaction().add(ix));
+    } catch (err) {
+      console.log(err);
+      throw err;
+    }
+    // Check the program log to see the message.
   });
 
   it("Repays full balance (SOL) by CPI", async () => {

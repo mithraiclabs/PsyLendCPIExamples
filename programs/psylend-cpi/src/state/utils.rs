@@ -1,4 +1,4 @@
-use std::ops::{Deref, DerefMut};
+use std::{ops::{Deref, DerefMut}, fmt::Display};
 
 use anchor_lang::prelude::*;
 use bytemuck::{Pod, Zeroable};
@@ -81,6 +81,16 @@ impl From<Pubkey> for StoredPubkey {
 impl std::fmt::Debug for StoredPubkey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         (&self.0 as &dyn std::fmt::Display).fmt(f)
+    }
+}
+impl Display for StoredPubkey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl PartialEq<Pubkey> for StoredPubkey {
+    fn eq(&self, other: &Pubkey) -> bool {
+        self.0.eq(other)
     }
 }
 unsafe impl Pod for StoredPubkey {}
